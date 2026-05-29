@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { X, AlertCircle } from "lucide-react";
+import { currentLocale } from "@/i18n";
 import type { PurchaseOrder } from "@crm/shared";
 
 interface ReceiveOrderDialogProps {
@@ -13,8 +15,14 @@ export function ReceiveOrderDialog({
   onConfirm,
   onClose,
 }: ReceiveOrderDialogProps) {
+  const { t } = useTranslation("purchaseOrders");
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const totalFormatted = order.totalCostSEK.toLocaleString(currentLocale(), {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   async function handleConfirm() {
     setConfirming(true);
@@ -26,7 +34,7 @@ export function ReceiveOrderDialog({
       setError(
         err instanceof Error
           ? err.message
-          : "Something went wrong. Please try again."
+          : t("receive.genericError")
       );
     } finally {
       setConfirming(false);
@@ -38,7 +46,7 @@ export function ReceiveOrderDialog({
       <div className="w-full max-w-md rounded-xl border border-border bg-background shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 className="text-lg font-semibold">Confirm Receipt</h2>
+          <h2 className="text-lg font-semibold">{t("receive.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -53,24 +61,19 @@ export function ReceiveOrderDialog({
           {/* Summary */}
           <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Supplier</span>
+              <span className="text-muted-foreground">{t("receive.supplier")}</span>
               <span className="font-medium">{order.supplierName}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Items</span>
+              <span className="text-muted-foreground">{t("receive.items")}</span>
               <span>
-                {order.items.length === 1
-                  ? "1 item"
-                  : `${order.items.length} items`}
+                {t("list.itemCount", { count: order.items.length })}
               </span>
             </div>
             <div className="flex justify-between text-sm border-t border-border pt-2 mt-2">
-              <span className="font-medium">Total cost</span>
+              <span className="font-medium">{t("receive.totalCost")}</span>
               <span className="font-semibold tabular-nums">
-                {order.totalCostSEK.toLocaleString("sv-SE", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {totalFormatted}{" "}
                 kr
               </span>
             </div>
@@ -79,7 +82,7 @@ export function ReceiveOrderDialog({
           {/* Items list */}
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">
-              Inventory will be updated:
+              {t("receive.inventoryUpdated")}
             </p>
             {order.items.map((item, i) => (
               <div
@@ -87,10 +90,11 @@ export function ReceiveOrderDialog({
                 className="flex items-center justify-between text-sm"
               >
                 <span className="text-muted-foreground">
-                  {item.productTitle} — {item.variantTitle}
+                  {item.productTitle}
+                  {item.variantTitle ? ` — ${item.variantTitle}` : ""}
                 </span>
                 <span className="font-medium tabular-nums">
-                  +{item.quantity} pcs
+                  {t("receive.pcs", { quantity: item.quantity })}
                 </span>
               </div>
             ))}
@@ -98,15 +102,12 @@ export function ReceiveOrderDialog({
 
           {/* What will happen */}
           <p className="text-xs text-muted-foreground">
-            Inventory will be updated and a cost transaction of{" "}
-            <strong>
-              {order.totalCostSEK.toLocaleString("sv-SE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{" "}
-              kr
-            </strong>{" "}
-            will be automatically created in accounting.
+            <Trans
+              i18nKey="receive.explanation"
+              ns="purchaseOrders"
+              values={{ total: totalFormatted }}
+              components={[<strong />]}
+            />
           </p>
 
           {error && (
@@ -125,7 +126,7 @@ export function ReceiveOrderDialog({
             disabled={confirming}
             className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("receive.cancel")}
           </button>
           <button
             type="button"
@@ -133,7 +134,7 @@ export function ReceiveOrderDialog({
             disabled={confirming}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {confirming ? "Confirming..." : "Confirm receipt"}
+            {confirming ? t("receive.confirming") : t("receive.confirm")}
           </button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,8 @@ export function AddMeetingDialog({
   onSubmit,
   isCalendarConnected,
 }: AddMeetingDialogProps) {
+  const { t } = useTranslation("meetings");
+  const { t: tCommon } = useTranslation("common");
   const defaultTimes = getDefaultMeetingTimes();
   const [form, setForm] = useState<MeetingFormData>({
     ...INITIAL_MEETING_FORM,
@@ -74,20 +77,18 @@ export function AddMeetingDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Schedule Meeting
+            {t("add.title")}
             {isCalendarConnected && (
               <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-normal text-green-700">
                 <CalendarCheck className="h-3 w-3" />
-                Google Calendar
+                {t("add.googleBadge")}
               </span>
             )}
           </DialogTitle>
           <DialogDescription>
-            Create a new meeting
             {isCalendarConnected
-              ? " - it will also be added to your Google Calendar"
-              : ""}
-            .
+              ? t("add.descriptionWithCalendar")
+              : `${t("add.descriptionBase")}.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -95,21 +96,21 @@ export function AddMeetingDialog({
           {/* Meeting Details */}
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Meeting Details
+              {t("sections.details")}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Title" required className="sm:col-span-2">
+              <Field label={t("fields.title")} required className="sm:col-span-2">
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => handleChange("title", e.target.value)}
                   className={INPUT_CLASS}
                   required
-                  placeholder="Meeting title"
+                  placeholder={t("placeholders.title")}
                 />
               </Field>
 
-              <Field label="Start Time" required>
+              <Field label={t("fields.startTime")} required>
                 <input
                   type="datetime-local"
                   value={form.startTime}
@@ -119,7 +120,7 @@ export function AddMeetingDialog({
                 />
               </Field>
 
-              <Field label="End Time" required>
+              <Field label={t("fields.endTime")} required>
                 <input
                   type="datetime-local"
                   value={form.endTime}
@@ -129,13 +130,13 @@ export function AddMeetingDialog({
                 />
               </Field>
 
-              <Field label="Location">
+              <Field label={t("fields.location")}>
                 <input
                   type="text"
                   value={form.location || ""}
                   onChange={(e) => handleChange("location", e.target.value)}
                   className={INPUT_CLASS}
-                  placeholder="Office, Zoom link, etc."
+                  placeholder={t("placeholders.location")}
                 />
               </Field>
 
@@ -151,16 +152,16 @@ export function AddMeetingDialog({
                   htmlFor="allDay"
                   className="text-sm text-muted-foreground cursor-pointer"
                 >
-                  All day event
+                  {t("fields.allDay")}
                 </label>
               </div>
 
-              <Field label="Description" className="sm:col-span-2">
+              <Field label={t("fields.description")} className="sm:col-span-2">
                 <textarea
                   value={form.description || ""}
                   onChange={(e) => handleChange("description", e.target.value)}
                   className={cn(INPUT_CLASS, "min-h-[80px] resize-y")}
-                  placeholder="Meeting agenda, notes..."
+                  placeholder={t("placeholders.description")}
                   rows={3}
                 />
               </Field>
@@ -173,7 +174,7 @@ export function AddMeetingDialog({
               <div className="border-t border-border" />
               <div>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Attendees
+                  {t("sections.attendees")}
                 </h3>
                 <AttendeeInput
                   attendees={form.attendees}
@@ -191,7 +192,7 @@ export function AddMeetingDialog({
                     htmlFor="sendNotifications"
                     className="text-sm text-muted-foreground cursor-pointer"
                   >
-                    Send email invitations to attendees
+                    {t("fields.sendNotifications")}
                   </label>
                 </div>
               </div>
@@ -202,16 +203,16 @@ export function AddMeetingDialog({
           <div className="border-t border-border" />
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Link to CRM
+              {t("sections.linkToCrm")}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Customer">
+              <Field label={t("fields.customer")}>
                 <select
                   value={form.customerId || ""}
                   onChange={(e) => handleChange("customerId", e.target.value)}
                   className={INPUT_CLASS}
                 >
-                  <option value="">Select customer...</option>
+                  <option value="">{t("placeholders.selectCustomer")}</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -220,12 +221,12 @@ export function AddMeetingDialog({
                 </select>
               </Field>
 
-              <Field label="Internal Notes" className="sm:col-span-2">
+              <Field label={t("fields.internalNotes")} className="sm:col-span-2">
                 <textarea
                   value={form.notes || ""}
                   onChange={(e) => handleChange("notes", e.target.value)}
                   className={cn(INPUT_CLASS, "min-h-[60px] resize-y")}
-                  placeholder="Internal notes (not shared with attendees)"
+                  placeholder={t("placeholders.internalNotes")}
                   rows={2}
                 />
               </Field>
@@ -239,14 +240,14 @@ export function AddMeetingDialog({
               onClick={() => handleOpenChange(false)}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
-              Cancel
+              {tCommon("actions.cancel")}
             </button>
             <button
               type="submit"
               disabled={submitting}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {submitting ? "Creating..." : "Schedule Meeting"}
+              {submitting ? t("add.submitting") : t("add.submit")}
             </button>
           </div>
         </form>

@@ -274,7 +274,7 @@ describe("parseVerifikationCsv", () => {
       );
       const result = parseVerifikationCsv(text);
       expect(result.warnings.length).toBeGreaterThan(0);
-      expect(result.warnings[0]).toMatch(/balansräkning/i);
+      expect(result.warnings[0]).toMatch(/balance-sheet/i);
     });
 
     it("warns when a balance-sheet category is inferred (supplier advance)", () => {

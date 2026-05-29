@@ -1,0 +1,60 @@
+{
+  "title": "Översikt",
+  "description": "Översikt över din verksamhet",
+  "period": {
+    "last30Days": "30 dagar",
+    "last90Days": "3 mån",
+    "last365Days": "12 mån",
+    "allTime": "Hela tiden"
+  },
+  "kpi": {
+    "shopifyRevenue": {
+      "label": "Shopify-intäkter",
+      "description": "Intäkter från Shopify-ordrar under vald period"
+    },
+    "shopifyOrders": {
+      "label": "Shopify-ordrar",
+      "description": "Antal Shopify-ordrar under vald period"
+    },
+    "inventoryRetailValue": {
+      "label": "Lagervärde (pris)",
+      "description": "Aktuellt lagervärde: lagerantal × försäljningspris"
+    },
+    "inventoryCostValue": {
+      "label": "Lagervärde (kostnad)",
+      "description": "Aktuellt lagervärde: lagerantal × inköpspris"
+    },
+    "inventoryUnits": {
+      "label": "Lagerenheter",
+      "description": "Totalt antal enheter i lager just nu"
+    },
+    "totalIncome": {
+      "label": "Total intäkt",
+      "description": "Totala intäkter under vald period"
+    },
+    "activeCustomers": {
+      "label": "Aktiva kunder",
+      "description": "Kunder med status aktiv eller pågående"
+    },
+    "mrr": {
+      "label": "MRR",
+      "description": "Monthly Recurring Revenue"
+    },
+    "meetingsThisWeek": {
+      "label": "Möten denna vecka",
+      "description": "Antal möten inbokade denna vecka"
+    }
+  },
+  "goals": {
+    "loading": "Laddar mål...",
+    "heading": "Mål",
+    "empty": "Inga mål är satta. Gå till <0>Profil</0> för att ange dina intäkts- och MRR-mål.",
+    "incomeGoal": "Mål för total intäkt",
+    "mrrGoal": "MRR-mål",
+    "deadline": "Deadline: ",
+    "daysRemaining": "Dagar kvar: ",
+    "daysOverdue_one": "{{count}} dag försenad",
+    "daysOverdue_other": "{{count}} dagar försenad",
+    "achieveHeading": "Hur når du det aktuella målet?"
+  }
+}

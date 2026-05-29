@@ -4,6 +4,7 @@ import { getStorage } from "firebase-admin/storage";
 
 interface SyncShopifyProductsInput {
   partnerId: string;
+  forceStockOverwrite?: boolean;
 }
 
 interface ShopifyVariantNode {
@@ -150,7 +151,7 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
       throw new HttpsError("permission-denied", "Only superAdmins can sync Shopify products");
     }
 
-    const { partnerId } = request.data;
+    const { partnerId, forceStockOverwrite } = request.data;
     if (!partnerId) {
       throw new HttpsError("invalid-argument", "partnerId is required");
     }
@@ -194,102 +195,102 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
     const now = new Date().toISOString();
     const productsCol = db.collection(`partners/${partnerId}/products`);
 
-    // Fetch existing CRM products to map shopifyProductId → docId
+    // Each Shopify variant maps to one CRM article (one document).
+    // Map existing articles by shopifyVariantId so re-syncs update in place
+    // and preserve CRM stock unless forceStockOverwrite is set.
     const existingSnap = await productsCol
-      .where("shopifyProductId", "!=", null)
+      .where("shopifyVariantId", "!=", null)
       .get();
 
-    const existingByShopifyId = new Map<string, string>();
+    const existingByVariantId = new Map<
+      string,
+      { docId: string; stock: number }
+    >();
     for (const doc of existingSnap.docs) {
-      const shopifyId = doc.data().shopifyProductId as string;
-      if (shopifyId) existingByShopifyId.set(shopifyId, doc.id);
+      const data = doc.data();
+      const variantId = data.shopifyVariantId as string | undefined;
+      if (variantId)
+        existingByVariantId.set(variantId, {
+          docId: doc.id,
+          stock: (data.stock as number) ?? 0,
+        });
     }
 
     let synced = 0;
     let created = 0;
 
     for (const shopifyProduct of allProducts) {
-      const existingDocId = existingByShopifyId.get(shopifyProduct.id);
-
-      // Copy image to Firebase Storage
-      const rawImageUrl =
-        shopifyProduct.images.edges[0]?.node.url ?? null;
-      const storageId = existingDocId ?? shopifyProduct.id.replace(/\//g, "_");
+      // Copy the product image once and share its URL across all variant
+      // articles. Keyed on the Shopify product id so it isn't recopied per
+      // variant or per sync.
+      const rawImageUrl = shopifyProduct.images.edges[0]?.node.url ?? null;
+      const groupStorageId = shopifyProduct.id.replace(/\//g, "_");
       let imageUrl: string | undefined;
-
       if (rawImageUrl) {
-        const storagePath = `partners/${partnerId}/products/${storageId}/cover`;
+        const storagePath = `partners/${partnerId}/products/${groupStorageId}/cover`;
         const copied = await copyImageToStorage(rawImageUrl, storagePath);
         if (copied) imageUrl = copied;
       }
-
-      // Map variants
-      const variants = shopifyProduct.variants.edges.map((e) => {
-        const v = e.node;
-        const inventoryLevel = v.inventoryItem.inventoryLevels.edges[0]?.node;
-        const availableQty =
-          inventoryLevel?.quantities.find((q) => q.name === "available")
-            ?.quantity ?? 0;
-
-        return {
-          id: crypto.randomUUID(),
-          title: v.title,
-          sku: v.sku ?? undefined,
-          price: parseFloat(v.price) || undefined,
-          stock: availableQty,
-          shopifyVariantId: v.id,
-          shopifyInventoryItemId: v.inventoryItem.id,
-          shopifyLocationId: inventoryLevel?.location.id ?? undefined,
-        };
-      });
 
       // Strip HTML from description
       const description = shopifyProduct.descriptionHtml
         .replace(/<[^>]+>/g, "")
         .trim();
 
-      if (existingDocId) {
-        // Update existing product — preserve CRM stock if already set
-        const existingDoc = await productsCol.doc(existingDocId).get();
-        const existingVariants = (
-          existingDoc.data()?.variants ?? []
-        ) as Array<{ shopifyVariantId?: string; stock: number }>;
+      const variantNodes = shopifyProduct.variants.edges.map((e) => e.node);
+      const isSingle = variantNodes.length === 1;
 
-        // Merge: keep existing CRM stock for variants that already exist
-        const mergedVariants = variants.map((v) => {
-          const existing = existingVariants.find(
-            (ev) => ev.shopifyVariantId === v.shopifyVariantId
-          );
-          return existing ? { ...v, stock: existing.stock, id: (existing as { id?: string }).id ?? v.id } : v;
-        });
+      for (const v of variantNodes) {
+        const inventoryLevel = v.inventoryItem.inventoryLevels.edges[0]?.node;
+        const availableQty =
+          inventoryLevel?.quantities.find((q) => q.name === "available")
+            ?.quantity ?? 0;
 
-        await productsCol.doc(existingDocId).update({
-          shopifyProductId: shopifyProduct.id,
-          shopifyHandle: shopifyProduct.handle,
+        const isDefault =
+          isSingle || v.title.toLowerCase() === "default title";
+        const title = isDefault
+          ? shopifyProduct.title
+          : `${shopifyProduct.title} – ${v.title}`;
+
+        const existing = existingByVariantId.get(v.id);
+
+        const baseFields = {
+          title,
+          groupTitle: shopifyProduct.title,
           ...(description && { description }),
           ...(shopifyProduct.vendor && { vendor: shopifyProduct.vendor }),
           ...(imageUrl && { imageUrl }),
-          variants: mergedVariants,
-          lastShopifySyncAt: now,
-          updatedAt: now,
-        });
-        synced++;
-      } else {
-        // Create new product
-        await productsCol.add({
-          title: shopifyProduct.title,
-          ...(description && { description }),
-          ...(shopifyProduct.vendor && { vendor: shopifyProduct.vendor }),
-          ...(imageUrl && { imageUrl }),
-          status: "active",
+          ...(v.sku && { sku: v.sku }),
+          ...(parseFloat(v.price) && { price: parseFloat(v.price) }),
           shopifyProductId: shopifyProduct.id,
           shopifyHandle: shopifyProduct.handle,
-          variants,
+          shopifyVariantId: v.id,
+          shopifyInventoryItemId: v.inventoryItem.id,
+          ...(inventoryLevel?.location.id && {
+            shopifyLocationId: inventoryLevel.location.id,
+          }),
           lastShopifySyncAt: now,
-          createdAt: now,
           updatedAt: now,
-        });
-        created++;
+        };
+
+        if (existing) {
+          await productsCol.doc(existing.docId).update({
+            ...baseFields,
+            stock: forceStockOverwrite ? availableQty : existing.stock,
+          });
+          synced++;
+        } else {
+          // Deterministic id from the Shopify variant id so re-syncs are stable.
+          const docId = `shopify-variant-${v.id.split("/").pop()}`;
+          await productsCol.doc(docId).set({
+            id: docId,
+            ...baseFields,
+            stock: availableQty,
+            status: "active",
+            createdAt: now,
+          });
+          created++;
+        }
       }
     }
 

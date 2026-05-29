@@ -1,0 +1,77 @@
+{
+  "page": {
+    "title": "Company Profile",
+    "description": "Company details for invoices and quotes"
+  },
+  "states": {
+    "loading": "Loading..."
+  },
+  "logo": {
+    "label": "Logo (used in invoices & quotes)",
+    "alt": "Company logo",
+    "none": "No logo",
+    "uploading": "Uploading…",
+    "replace": "Replace",
+    "upload": "Upload",
+    "uploadFailed": "Upload failed"
+  },
+  "fSkatt": {
+    "label": "F-skatt",
+    "registered": "Registrerad",
+    "notRegistered": "Ej registrerad"
+  },
+  "sections": {
+    "companyInfo": "Företagsinformation",
+    "goals": "Mål"
+  },
+  "fields": {
+    "legalName": {
+      "label": "Juridiskt namn",
+      "placeholder": "Mitt AB"
+    },
+    "orgNumber": {
+      "label": "Organisationsnummer",
+      "placeholder": "556677-8899"
+    },
+    "bank": {
+      "label": "Bank",
+      "placeholder": "Swedbank"
+    },
+    "bankgiro": {
+      "label": "Bankgiro",
+      "placeholder": "123-4567"
+    },
+    "address": {
+      "label": "Adress",
+      "placeholder": "Storgatan 1, 111 22 Stockholm"
+    },
+    "phone": {
+      "label": "Telefon",
+      "placeholder": "+46 70 123 45 67"
+    },
+    "email": {
+      "label": "E-post",
+      "placeholder": "info@example.se"
+    },
+    "website": {
+      "label": "Webbplats",
+      "placeholder": "https://example.se"
+    },
+    "incomeGoal": {
+      "label": "Inkomstmål (SEK/år)",
+      "placeholder": "600000"
+    },
+    "mrrGoal": {
+      "label": "MRR-mål (SEK/mån)",
+      "placeholder": "60000"
+    },
+    "goalDeadline": {
+      "label": "Deadline"
+    },
+    "goalDescription": {
+      "label": "Hur når vi målet?",
+      "placeholder": "Fokusera på att konvertera varma leads..."
+    }
+  },
+  "logout": "Logga ut"
+}

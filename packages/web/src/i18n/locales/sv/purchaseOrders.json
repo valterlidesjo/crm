@@ -1,0 +1,90 @@
+{
+  "currency": {
+    "SEK": "Kronor",
+    "EUR": "Euro",
+    "USD": "Dollar",
+    "CNY": "Yuan"
+  },
+  "status": {
+    "pending": "Väntande",
+    "received": "Mottagen",
+    "cancelled": "Avbruten"
+  },
+  "page": {
+    "title": "Inköpsorder",
+    "description": "Registrera leverantörsinköp och uppdatera lagret vid leverans",
+    "newOrder": "Ny inköpsorder",
+    "loading": "Laddar..."
+  },
+  "list": {
+    "emptyTitle": "Inga inköpsorder",
+    "emptyHint": "Skapa en ny order för att spåra leverantörsinköp",
+    "headers": {
+      "supplier": "Leverantör",
+      "date": "Datum",
+      "items": "Artiklar",
+      "total": "Totalt (SEK)",
+      "status": "Status"
+    },
+    "delivery": "Leverans: {{date}}",
+    "itemCount_one": "{{count}} artikel",
+    "itemCount_other": "{{count}} artiklar",
+    "receive": "Ta emot",
+    "cancel": "Avbryt"
+  },
+  "add": {
+    "title": "Ny inköpsorder",
+    "fields": {
+      "supplier": "Leverantör",
+      "orderDate": "Orderdatum",
+      "expectedDeliveryDate": "Förväntat leveransdatum",
+      "markup": "Påslag % (frakt, tull, hantering)",
+      "accountingCategory": "Bokföringskategori",
+      "notes": "Anteckningar"
+    },
+    "placeholders": {
+      "supplier": "t.ex. Guangzhou Mirrors Co.",
+      "notes": "Valfritt"
+    },
+    "items": {
+      "heading": "Artiklar",
+      "addRow": "Lägg till rad",
+      "columns": {
+        "article": "Artikel",
+        "qty": "Antal",
+        "price": "Pris",
+        "currency": "Valuta",
+        "rate": "Kurs (1→SEK)",
+        "costSEK": "Kostnad SEK"
+      },
+      "selectArticle": "Välj artikel…"
+    },
+    "estimatedTotal": "Uppskattad totalkostnad",
+    "inclMarkup": "(inkl. {{markup}}% påslag)",
+    "validation": {
+      "enterSupplier": "Ange leverantörsnamn",
+      "atLeastOneItem": "Minst en artikel krävs",
+      "selectArticle": "Välj artikel för rad {{row}}",
+      "quantityPositive": "Antal måste vara > 0 för rad {{row}}",
+      "pricePositive": "Pris måste vara > 0 för rad {{row}}",
+      "ratePositive": "Växelkurs måste vara > 0 för rad {{row}}"
+    },
+    "genericError": "Något gick fel. Försök igen.",
+    "cancel": "Avbryt",
+    "saving": "Sparar...",
+    "create": "Skapa order"
+  },
+  "receive": {
+    "title": "Bekräfta mottagande",
+    "supplier": "Leverantör",
+    "items": "Artiklar",
+    "totalCost": "Totalkostnad",
+    "inventoryUpdated": "Lagret kommer att uppdateras:",
+    "pcs": "+{{quantity}} st",
+    "explanation": "Lagret uppdateras och en kostnadstransaktion på <0>{{total}} kr</0> skapas automatiskt i bokföringen.",
+    "genericError": "Något gick fel. Försök igen.",
+    "cancel": "Avbryt",
+    "confirming": "Bekräftar...",
+    "confirm": "Bekräfta mottagande"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "page": {
+    "title": "Settings",
+    "description": "Manage users and system settings"
+  },
+  "users": {
+    "heading": "Allowed Users",
+    "subheading": "Manage who can access the CRM",
+    "addUser": "Add User",
+    "loading": "Loading users...",
+    "empty": "No users found",
+    "confirmRemove": "Are you sure you want to remove this user?",
+    "table": {
+      "email": "Email",
+      "role": "Role",
+      "addedBy": "Added By",
+      "actions": "Actions"
+    },
+    "remove": "Remove",
+    "removing": "Removing..."
+  },
+  "role": {
+    "admin": "Administrator",
+    "user": "User"
+  },
+  "addEmail": {
+    "title": "Add New User",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "roleLabel": "Role",
+    "roleHint": "Users can access everything except Accounting, Invoicing, and Settings",
+    "submit": "Add User",
+    "submitting": "Adding..."
+  },
+  "kpiConfig": {
+    "heading": "Dashboard KPIs",
+    "description": "Select which KPIs are shown on the dashboard for this partner.",
+    "timeSensitive": "· affected by time filter",
+    "saveError": "Could not save settings",
+    "saving": "Saving...",
+    "saved": "Saved!"
+  }
+}

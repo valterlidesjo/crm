@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { X, ChevronLeft, Search } from "lucide-react";
 import { getDocs, query, where, limit } from "firebase/firestore";
 import { partnerCol } from "@/lib/firebase-partner";
@@ -29,6 +30,7 @@ function slugPreview(name: string): string {
 }
 
 export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }: Props) {
+  const { t } = useTranslation(["partners", "common"]);
   const [step, setStep] = useState<1 | 2>(1);
   const [source, setSource] = useState<"scratch" | "customer">("scratch");
   const [search, setSearch] = useState("");
@@ -124,11 +126,11 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
               </button>
             )}
             <h2 className="text-base font-semibold">
-              {step === 1 ? "New Partner" : "Review & confirm"}
+              {step === 1 ? t("create.titleStep1") : t("create.titleStep2")}
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Step {step} of 2</span>
+            <span className="text-xs text-muted-foreground">{t("create.stepIndicator", { step })}</span>
             <button
               onClick={() => onOpenChange(false)}
               className="rounded-md p-1 text-muted-foreground hover:bg-muted"
@@ -152,7 +154,7 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                     : "border-input text-muted-foreground hover:bg-muted",
                 ].join(" ")}
               >
-                From scratch
+                {t("create.fromScratch")}
               </button>
               <button
                 type="button"
@@ -164,7 +166,7 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                     : "border-input text-muted-foreground hover:bg-muted",
                 ].join(" ")}
               >
-                From customer
+                {t("create.fromCustomer")}
               </button>
             </div>
 
@@ -174,7 +176,7 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search customers..."
+                    placeholder={t("create.searchCustomers")}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="w-full rounded-md border border-input bg-background py-1.5 pl-8 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
@@ -182,9 +184,9 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                 </div>
                 <div className="max-h-52 overflow-y-auto rounded-md border border-input">
                   {loadingCustomers ? (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">Loading...</p>
+                    <p className="px-3 py-2 text-sm text-muted-foreground">{t("create.loadingCustomers")}</p>
                   ) : filteredCustomers.length === 0 ? (
-                    <p className="px-3 py-2 text-sm text-muted-foreground">No customers found.</p>
+                    <p className="px-3 py-2 text-sm text-muted-foreground">{t("create.noCustomers")}</p>
                   ) : (
                     filteredCustomers.map((c) => (
                       <button
@@ -198,7 +200,7 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                       >
                         <span>{c.name}</span>
                         {selectedCustomer?.id === c.id && (
-                          <span className="text-xs">Selected</span>
+                          <span className="text-xs">{t("create.selected")}</span>
                         )}
                       </button>
                     ))
@@ -214,7 +216,7 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                 disabled={source === "customer" && !selectedCustomer}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                Next
+                {t("create.next")}
               </button>
             </div>
           </div>
@@ -224,26 +226,26 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
         {step === 2 && (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Partner name</label>
+              <label className="text-sm font-medium">{t("create.partnerName")}</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Acme AB"
+                placeholder={t("create.partnerNamePlaceholder")}
                 required
                 autoFocus
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
               {name.trim() && (
                 <p className="text-xs text-muted-foreground">
-                  Partner ID: <span className="font-mono">{slugPreview(name)}</span>
+                  {t("create.partnerIdPreview")} <span className="font-mono">{slugPreview(name)}</span>
                 </p>
               )}
             </div>
 
             {contactMember && (
               <div className="rounded-md border border-border p-3 space-y-2">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Contact person</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t("create.contactPerson")}</p>
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -266,14 +268,14 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                       className="rounded-md border border-input bg-background px-2 py-1 text-xs"
                     >
                       {(Object.keys(PARTNER_ROLE_LABELS) as PartnerRole[]).map((r) => (
-                        <option key={r} value={r}>{PARTNER_ROLE_LABELS[r]}</option>
+                        <option key={r} value={r}>{t(`role.${r}`)}</option>
                       ))}
                     </select>
                   )}
                 </label>
                 {contactMember.include && (
                   <p className="text-xs text-muted-foreground">
-                    Will be added to <span className="font-mono">allowedEmails</span> and the partner's members list.
+                    {t("create.willBeAddedPrefix")} <span className="font-mono">allowedEmails</span> {t("create.willBeAddedSuffix")}
                   </p>
                 )}
               </div>
@@ -285,14 +287,14 @@ export function CreatePartnerDialog({ partnerId, open, onOpenChange, onCreate }:
                 onClick={() => onOpenChange(false)}
                 className="rounded-md border border-input px-4 py-2 text-sm hover:bg-muted"
               >
-                Cancel
+                {t("common:actions.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={submitting || !name.trim()}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
-                {submitting ? "Creating..." : "Create partner"}
+                {submitting ? t("create.creating") : t("create.createPartner")}
               </button>
             </div>
           </form>

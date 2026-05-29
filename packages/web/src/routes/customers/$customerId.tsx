@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { onSnapshot } from "firebase/firestore";
 import { PageContainer } from "@/components/layout/page-container";
@@ -6,7 +7,6 @@ import { useCustomers } from "@/features/customers/hooks/use-customers";
 import { partnerDocRef } from "@/lib/firebase-partner";
 import { usePartner } from "@/lib/partner";
 import { EditCustomerDialog } from "@/features/customers/components/edit-customer-dialog";
-import { CUSTOMER_STATUS_LABELS } from "@crm/shared";
 import type { Customer, ContactUser } from "@crm/shared";
 import type { CustomerFormData, UserFormData } from "@/features/customers/components/form-fields";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function CustomerDetailPage() {
+  const { t } = useTranslation("customers");
   const { customerId } = Route.useParams();
   const navigate = useNavigate();
   const { partnerId } = usePartner();
@@ -88,23 +89,23 @@ function CustomerDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer title="Customer Detail">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+      <PageContainer title={t("detail.detailTitle")}>
+        <p className="text-sm text-muted-foreground">{t("detail.loading")}</p>
       </PageContainer>
     );
   }
 
   if (!customer) {
     return (
-      <PageContainer title="Customer Not Found">
+      <PageContainer title={t("detail.notFoundTitle")}>
         <p className="text-sm text-muted-foreground">
-          This customer does not exist.
+          {t("detail.notFoundBody")}
         </p>
         <button
           onClick={() => navigate({ to: "/pipeline" })}
           className="mt-4 inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to pipeline
+          <ArrowLeft className="h-4 w-4" /> {t("detail.backToPipeline")}
         </button>
       </PageContainer>
     );
@@ -118,13 +119,13 @@ function CustomerDetailPage() {
           onClick={() => navigate({ to: "/pipeline" })}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {t("detail.back")}
         </button>
         <button
           onClick={() => setEditOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
-          <Pencil className="h-3.5 w-3.5" /> Edit
+          <Pencil className="h-3.5 w-3.5" /> {t("detail.edit")}
         </button>
       </div>
 
@@ -136,7 +137,7 @@ function CustomerDetailPage() {
             STATUS_COLORS[customer.status]
           )}
         >
-          {CUSTOMER_STATUS_LABELS[customer.status]}
+          {t(`status.${customer.status}`)}
         </span>
         <span className="text-sm text-muted-foreground">
           {customer.categoryOfWork}
@@ -147,23 +148,23 @@ function CustomerDetailPage() {
         {/* Customer info */}
         <div className="rounded-lg border border-border p-5 space-y-4">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <Building2 className="h-4 w-4" /> Company Information
+            <Building2 className="h-4 w-4" /> {t("detail.companyInformation")}
           </h3>
           <div className="space-y-3">
-            <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value={customer.location} />
-            <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={customer.phone} />
-            <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={customer.email} />
+            <InfoRow icon={<MapPin className="h-4 w-4" />} label={t("detail.info.location")} value={customer.location} />
+            <InfoRow icon={<Phone className="h-4 w-4" />} label={t("detail.info.phone")} value={customer.phone} />
+            <InfoRow icon={<Mail className="h-4 w-4" />} label={t("detail.info.email")} value={customer.email} />
             {customer.website && (
-              <InfoRow icon={<Globe className="h-4 w-4" />} label="Website" value={customer.website} isLink />
+              <InfoRow icon={<Globe className="h-4 w-4" />} label={t("detail.info.website")} value={customer.website} isLink />
             )}
             {customer.orgNumber && (
-              <InfoRow icon={<FileText className="h-4 w-4" />} label="Org Nr" value={customer.orgNumber} />
+              <InfoRow icon={<FileText className="h-4 w-4" />} label={t("detail.info.orgNumber")} value={customer.orgNumber} />
             )}
             {customer.legalName && (
-              <InfoRow icon={<Building2 className="h-4 w-4" />} label="Legal Name" value={customer.legalName} />
+              <InfoRow icon={<Building2 className="h-4 w-4" />} label={t("detail.info.legalName")} value={customer.legalName} />
             )}
             {customer.description && (
-              <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Description" value={customer.description} />
+              <InfoRow icon={<Briefcase className="h-4 w-4" />} label={t("detail.info.description")} value={customer.description} />
             )}
           </div>
         </div>
@@ -171,18 +172,18 @@ function CustomerDetailPage() {
         {/* Contact person */}
         <div className="rounded-lg border border-border p-5 space-y-4">
           <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-            <User className="h-4 w-4" /> Contact Person
+            <User className="h-4 w-4" /> {t("detail.contactPerson")}
           </h3>
           {contactUser ? (
             <div className="space-y-3">
-              <InfoRow icon={<User className="h-4 w-4" />} label="Name" value={contactUser.name} />
-              <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value={contactUser.location} />
-              <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={contactUser.phone} />
-              <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={contactUser.email} />
+              <InfoRow icon={<User className="h-4 w-4" />} label={t("detail.info.name")} value={contactUser.name} />
+              <InfoRow icon={<MapPin className="h-4 w-4" />} label={t("detail.info.location")} value={contactUser.location} />
+              <InfoRow icon={<Phone className="h-4 w-4" />} label={t("detail.info.phone")} value={contactUser.phone} />
+              <InfoRow icon={<Mail className="h-4 w-4" />} label={t("detail.info.email")} value={contactUser.email} />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No contact person linked.
+              {t("detail.noContactPerson")}
             </p>
           )}
         </div>
@@ -190,8 +191,8 @@ function CustomerDetailPage() {
 
       {/* Timestamps */}
       <div className="mt-6 flex gap-4 text-xs text-muted-foreground">
-        <span>Created: {new Date(customer.createdAt).toLocaleDateString()}</span>
-        <span>Updated: {new Date(customer.updatedAt).toLocaleDateString()}</span>
+        <span>{t("detail.created", { date: new Date(customer.createdAt).toLocaleDateString() })}</span>
+        <span>{t("detail.updated", { date: new Date(customer.updatedAt).toLocaleDateString() })}</span>
       </div>
 
       <EditCustomerDialog

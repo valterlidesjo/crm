@@ -1,0 +1,81 @@
+{
+  "page": {
+    "title": "Möten",
+    "description": "Schemalägg och följ upp möten med Google Kalender-integration"
+  },
+  "connectBanner": {
+    "title": "Anslut Google Kalender",
+    "description": "Aktivera tvåvägssynkronisering med din Google Kalender för automatisk skapande och uppdatering av händelser.",
+    "button": "Anslut kalender"
+  },
+  "errorBanner": {
+    "title": "Auktoriseringen misslyckades"
+  },
+  "actions": {
+    "schedule": "Schemalägg möte",
+    "sync": "Synka kalender",
+    "syncing": "Synkar..."
+  },
+  "count_one": "{{count}} möte",
+  "count_other": "{{count}} möten",
+  "list": {
+    "emptyTitle": "Inga möten schemalagda",
+    "emptyDescription": "Schemalägg ett möte för att komma igång",
+    "today": "Idag",
+    "allDay": "Heldag",
+    "attendees_one": "{{count}} deltagare",
+    "attendees_other": "{{count}} deltagare"
+  },
+  "add": {
+    "title": "Schemalägg möte",
+    "googleBadge": "Google Kalender",
+    "descriptionBase": "Skapa ett nytt möte",
+    "descriptionWithCalendar": "Skapa ett nytt möte - det läggs även till i din Google Kalender.",
+    "submit": "Schemalägg möte",
+    "submitting": "Skapar..."
+  },
+  "edit": {
+    "title": "Redigera möte",
+    "syncedBadge": "Synkad",
+    "descriptionBase": "Uppdatera mötesinformation",
+    "descriptionWithCalendar": "Uppdatera mötesinformation - ändringarna synkas till Google Kalender.",
+    "viewInGoogle": "Visa i Google Kalender",
+    "submit": "Spara ändringar",
+    "submitting": "Sparar...",
+    "deleteConfirm": "Radera det här mötet?",
+    "deleteYes": "Ja, radera",
+    "deleting": "Raderar...",
+    "notifyChanges": "Meddela deltagare om ändringar"
+  },
+  "sections": {
+    "details": "Mötesinformation",
+    "attendees": "Deltagare",
+    "linkToCrm": "Koppla till CRM"
+  },
+  "fields": {
+    "title": "Titel",
+    "startTime": "Starttid",
+    "endTime": "Sluttid",
+    "location": "Plats",
+    "allDay": "Heldagshändelse",
+    "description": "Beskrivning",
+    "sendNotifications": "Skicka e-postinbjudningar till deltagare",
+    "customer": "Kund",
+    "internalNotes": "Interna anteckningar",
+    "outcome": "Utfall"
+  },
+  "placeholders": {
+    "title": "Mötestitel",
+    "location": "Kontor, Zoom-länk, osv.",
+    "description": "Mötesagenda, anteckningar...",
+    "selectCustomer": "Välj kund...",
+    "internalNotes": "Interna anteckningar (delas inte med deltagare)",
+    "outcome": "Mötesutfall, åtgärdspunkter..."
+  },
+  "attendeeInput": {
+    "emailPlaceholder": "epost@exempel.com",
+    "namePlaceholder": "Namn (valfritt)",
+    "add": "Lägg till deltagare"
+  },
+  "untitled": "Namnlöst möte"
+}

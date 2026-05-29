@@ -1,0 +1,21 @@
+{
+  "page": {
+    "title": "Pipeline",
+    "description": "Track your customers through each stage"
+  },
+  "stage": {
+    "prospecting": "Prospecting",
+    "contacted": "Contacted",
+    "in_progress": "In Progress",
+    "deal_closed": "Deal Closed",
+    "lost": "Lost"
+  },
+  "board": {
+    "loading": "Loading pipeline...",
+    "searchPlaceholder": "Search customers...",
+    "summary": "{{label}}: {{count}}",
+    "lostCount": "Lost ({{count}})",
+    "noLostCustomers": "No lost customers",
+    "noCustomers": "No customers"
+  }
+}

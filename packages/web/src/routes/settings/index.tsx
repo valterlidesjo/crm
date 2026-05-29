@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/layout/page-container";
 import { requireSuperAdmin } from "@/lib/route-guards";
 import { UserManagement } from "@/features/settings/components/user-management";
@@ -10,10 +11,11 @@ export const Route = createFileRoute("/settings/")({
 });
 
 function SettingsPage() {
+  const { t } = useTranslation("settings");
   return (
     <PageContainer
-      title="Settings"
-      description="Manage users and system settings"
+      title={t("page.title")}
+      description={t("page.description")}
     >
       <div className="space-y-10">
         <UserManagement />

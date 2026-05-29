@@ -33,7 +33,7 @@ describe("AddCustomerDialog", () => {
 
   it("should show customer information section", () => {
     renderDialog();
-    expect(screen.getByText("Customer Information")).toBeInTheDocument();
+    expect(screen.getByText("Company Information")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Company name")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("City, Country")).toBeInTheDocument();
   });

@@ -1,0 +1,71 @@
+{
+  "page": {
+    "title": "Partners",
+    "description": "Hantera partners, deras användare och funktionsåtkomst.",
+    "newPartner": "Ny partner",
+    "loading": "Laddar partners...",
+    "empty": "Inga partners än. Skapa en för att komma igång."
+  },
+  "role": {
+    "admin": "Administratör",
+    "user": "Användare"
+  },
+  "feature": {
+    "dashboard": "Översikt",
+    "customers": "Kunder",
+    "pipeline": "Pipeline",
+    "meetings": "Möten",
+    "invoicing": "Fakturering",
+    "quotes": "Offerter",
+    "accounting": "Bokföring",
+    "inventory": "Lager",
+    "orders": "Ordrar",
+    "purchaseOrders": "Inköpsordrar",
+    "settings": "Inställningar",
+    "profile": "Profil"
+  },
+  "tabs": {
+    "members": "Medlemmar",
+    "features": "Funktioner"
+  },
+  "card": {
+    "saving": "Sparar...",
+    "emulateTitle": "Emulera denna partner"
+  },
+  "members": {
+    "loading": "Laddar medlemmar...",
+    "empty": "Inga medlemmar än.",
+    "emailLabel": "E-post",
+    "emailPlaceholder": "user@example.com",
+    "roleLabel": "Roll",
+    "adding": "Lägger till...",
+    "addMember": "Lägg till medlem"
+  },
+  "create": {
+    "titleStep1": "Ny partner",
+    "titleStep2": "Granska & bekräfta",
+    "stepIndicator": "Steg {{step}} av 2",
+    "fromScratch": "Från grunden",
+    "fromCustomer": "Från kund",
+    "searchCustomers": "Sök kunder...",
+    "loadingCustomers": "Laddar...",
+    "noCustomers": "Inga kunder hittades.",
+    "selected": "Vald",
+    "next": "Nästa",
+    "partnerName": "Partnernamn",
+    "partnerNamePlaceholder": "Acme AB",
+    "partnerIdPreview": "Partner-ID:",
+    "contactPerson": "Kontaktperson",
+    "willBeAddedPrefix": "Läggs till i",
+    "willBeAddedSuffix": "och partnerns medlemslista.",
+    "creating": "Skapar...",
+    "createPartner": "Skapa partner"
+  },
+  "shopify": {
+    "title": "Shopify",
+    "description": "Konfigurera och synka Shopify per partner",
+    "loading": "Laddar partners...",
+    "empty": "Inga partners hittades.",
+    "manage": "Hantera"
+  }
+}

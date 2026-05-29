@@ -1,0 +1,21 @@
+{
+  "page": {
+    "title": "Pipeline",
+    "description": "Följ dina kunder genom varje steg"
+  },
+  "stage": {
+    "prospecting": "Prospektering",
+    "contacted": "Kontaktad",
+    "in_progress": "Pågående",
+    "deal_closed": "Affär avslutad",
+    "lost": "Förlorad"
+  },
+  "board": {
+    "loading": "Laddar pipeline...",
+    "searchPlaceholder": "Sök kunder...",
+    "summary": "{{label}}: {{count}}",
+    "lostCount": "Förlorade ({{count}})",
+    "noLostCustomers": "Inga förlorade kunder",
+    "noCustomers": "Inga kunder"
+  }
+}

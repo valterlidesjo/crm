@@ -1,0 +1,36 @@
+{
+  "page": {
+    "title": "Orders",
+    "description": "Shopify orders synced to the CRM via webhooks"
+  },
+  "filter": {
+    "statusLabel": "Status",
+    "allStatuses": "All statuses"
+  },
+  "status": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "fulfilled": "Fulfilled",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded"
+  },
+  "states": {
+    "loading": "Loading orders...",
+    "empty": "No orders found."
+  },
+  "table": {
+    "order": "Order",
+    "source": "Source",
+    "date": "Date",
+    "status": "Status",
+    "customer": "Customer",
+    "total": "Total"
+  },
+  "lineItems": {
+    "product": "Product",
+    "variant": "Variant",
+    "sku": "SKU",
+    "qty": "Qty",
+    "unitPrice": "Unit price"
+  }
+}

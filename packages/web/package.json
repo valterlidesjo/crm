@@ -21,11 +21,13 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^11.5.0",
+    "i18next": "^26.3.0",
     "jspdf": "^4.0.0",
     "lucide-react": "^0.475.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-error-boundary": "^6.1.1",
+    "react-i18next": "^17.0.8",
     "tailwind-merge": "^3.0.0"
   },
   "devDependencies": {

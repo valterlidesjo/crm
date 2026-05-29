@@ -1,0 +1,120 @@
+{
+  "status": {
+    "not_contacted": "Not Contacted",
+    "contacted": "Contacted",
+    "in_progress": "In Progress",
+    "warm": "Warm",
+    "mrr": "MRR",
+    "completed": "Completed",
+    "lost": "Lost"
+  },
+  "page": {
+    "title": "Customers",
+    "description": "Manage your customers and leads",
+    "addCustomer": "Add Customer"
+  },
+  "list": {
+    "loading": "Loading customers...",
+    "emptyTitle": "No customers yet.",
+    "emptyHint": "Click \"Add Customer\" to get started.",
+    "headers": {
+      "name": "Name",
+      "location": "Location",
+      "email": "Email",
+      "phone": "Phone",
+      "category": "Category",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "editTooltip": "Edit customer",
+    "edit": "Edit"
+  },
+  "type": {
+    "business": "Business",
+    "private": "Private Person"
+  },
+  "sections": {
+    "personalDetails": "Personal Details",
+    "companyInformation": "Company Information",
+    "contactPerson": "Contact Person"
+  },
+  "fields": {
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "location": "Location",
+    "personalNumber": "Personal Number (optional)",
+    "status": "Status",
+    "categoryOfWork": "Category of Work",
+    "description": "Description",
+    "website": "Website",
+    "orgNumber": "Org Nr",
+    "legalName": "Legal Name",
+    "mrr": "Monthly Recurring Revenue (SEK)"
+  },
+  "placeholders": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "personEmail": "person@example.com",
+    "phone": "+46 70 123 4567",
+    "stockholm": "Stockholm",
+    "personalNumber": "YYYYMMDD-XXXX",
+    "companyName": "Company name",
+    "cityCountry": "City, Country",
+    "companyEmail": "contact@company.com",
+    "categoryOfWork": "e.g. IT, Construction, Retail",
+    "description": "Brief description of the customer...",
+    "descriptionShort": "Brief description...",
+    "website": "https://example.com",
+    "orgNumber": "556677-8899",
+    "legalName": "Full legal entity name",
+    "mrr": "10000",
+    "contactName": "Contact name",
+    "contactEmail": "person@company.com"
+  },
+  "add": {
+    "title": "Add Customer",
+    "description": "Add a new customer and their contact person.",
+    "useSameInfo": "Use same name & contact info",
+    "sameInfoNote": "Contact person will use the same name, location, phone, and email as the customer.",
+    "submit": "Add Customer"
+  },
+  "edit": {
+    "titleContactPerson": "Edit Contact Person",
+    "titleCustomer": "Edit Customer",
+    "descriptionContactPerson": "Edit the contact person linked to this customer.",
+    "descriptionCustomer": "Update customer information.",
+    "toggleCustomer": "Customer",
+    "toggleContactPerson": "Contact Person",
+    "save": "Save Changes"
+  },
+  "actions": {
+    "cancel": "Cancel"
+  },
+  "detail": {
+    "detailTitle": "Customer Detail",
+    "loading": "Loading...",
+    "notFoundTitle": "Customer Not Found",
+    "notFoundBody": "This customer does not exist.",
+    "backToPipeline": "Back to pipeline",
+    "back": "Back",
+    "edit": "Edit",
+    "companyInformation": "Company Information",
+    "contactPerson": "Contact Person",
+    "noContactPerson": "No contact person linked.",
+    "info": {
+      "location": "Location",
+      "phone": "Phone",
+      "email": "Email",
+      "website": "Website",
+      "orgNumber": "Org Nr",
+      "legalName": "Legal Name",
+      "description": "Description",
+      "name": "Name"
+    },
+    "created": "Created: {{date}}",
+    "updated": "Updated: {{date}}"
+  }
+}

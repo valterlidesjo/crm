@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   DndContext,
   DragOverlay,
@@ -31,12 +32,16 @@ export function PipelineBoard({
   loading,
   onUpdateStatus,
 }: PipelineBoardProps) {
+  const { t } = useTranslation("pipeline");
   const [search, setSearch] = useState("");
   const [activeCustomer, setActiveCustomer] = useState<Customer | null>(null);
   const [lostExpanded, setLostExpanded] = useState(false);
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, CustomerStatusType>>({});
 
+  // Prune optimistic statuses once the real customer data catches up.
+  // Intentional reconcile of local state against incoming props.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOptimisticStatuses((prev) => {
       if (Object.keys(prev).length === 0) return prev;
       const next = { ...prev };
@@ -108,7 +113,7 @@ export function PipelineBoard({
 
   if (loading) {
     return (
-      <p className="text-sm text-muted-foreground">Loading pipeline...</p>
+      <p className="text-sm text-muted-foreground">{t("board.loading")}</p>
     );
   }
 
@@ -124,7 +129,7 @@ export function PipelineBoard({
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search customers..."
+            placeholder={t("board.searchPlaceholder")}
             className="w-full rounded-md border border-border bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           />
         </div>
@@ -132,12 +137,12 @@ export function PipelineBoard({
           {PIPELINE_STAGES.map((stage) => (
             <span key={stage.id} className="flex items-center gap-1">
               <span className={cn("h-2 w-2 rounded-full", stage.color)} />
-              {stage.label}: {(grouped[stage.id] ?? []).length}
+              {t("board.summary", { label: t(`stage.${stage.id}`), count: (grouped[stage.id] ?? []).length })}
             </span>
           ))}
           <span className="flex items-center gap-1">
             <span className={cn("h-2 w-2 rounded-full", LOST_STAGE.color)} />
-            Lost: {lostCustomers.length}
+            {t("board.summary", { label: t("stage.lost"), count: lostCustomers.length })}
           </span>
         </div>
       </div>
@@ -170,13 +175,13 @@ export function PipelineBoard({
               <ChevronRight className="h-4 w-4" />
             )}
             <span className={cn("h-2.5 w-2.5 rounded-full", LOST_STAGE.color)} />
-            Lost ({lostCustomers.length})
+            {t("board.lostCount", { count: lostCustomers.length })}
           </button>
           {lostExpanded && (
             <div className="border-t border-border px-4 py-3">
               {lostCustomers.length === 0 ? (
                 <p className="text-xs text-muted-foreground py-2">
-                  No lost customers
+                  {t("board.noLostCustomers")}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">

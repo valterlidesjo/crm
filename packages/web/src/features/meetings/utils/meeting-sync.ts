@@ -1,4 +1,5 @@
 import type { Meeting, MeetingAttendee } from "@crm/shared";
+import i18n from "@/i18n";
 import type { GoogleCalendarEvent } from "../hooks/use-google-calendar";
 
 /**
@@ -21,7 +22,7 @@ export function googleEventToMeeting(
     outcome: existingMeeting?.outcome,
 
     // Fields from Google Calendar
-    title: event.summary || "Untitled Meeting",
+    title: event.summary || i18n.getFixedT(null, "meetings")("untitled"),
     description: event.description,
     location: event.location,
     startTime,

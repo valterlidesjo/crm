@@ -1,5 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Upload, X, Download, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { currentLocale } from "@/i18n";
 import type { Customer } from "@crm/shared";
 import {
   parseCsvInvoices,
@@ -24,6 +26,7 @@ export function ImportInvoicesDialog({
   onClose,
   onImported,
 }: ImportInvoicesDialogProps) {
+  const { t } = useTranslation("invoices");
   const { addInvoice } = useInvoices();
   const { partnerId } = usePartner();
 
@@ -53,7 +56,7 @@ export function ImportInvoicesDialog({
 
   function handleFile(file: File) {
     if (!file.name.endsWith(".csv")) {
-      setParseErrors(["Please upload a .csv file."]);
+      setParseErrors([t("import.errors.notCsv")]);
       return;
     }
     const reader = new FileReader();
@@ -75,15 +78,12 @@ export function ImportInvoicesDialog({
     if (file) handleFile(file);
   }
 
-  const onDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFile(file);
-    },
-    [customers] // eslint-disable-line react-hooks/exhaustive-deps
-  );
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  }
 
   async function handleImport() {
     setStep("importing");
@@ -102,7 +102,11 @@ export function ImportInvoicesDialog({
         await addInvoice({ ...formData, invoiceRef: ref });
       } catch (err) {
         errs.push(
-          `Invoice ${i + 1} (${inv.customerName}): ${err instanceof Error ? err.message : "Unknown error"}`
+          t("import.errors.importRow", {
+            index: i + 1,
+            customer: inv.customerName,
+            message: err instanceof Error ? err.message : t("import.errors.unknownError"),
+          })
         );
       }
       setImportProgress(i + 1);
@@ -125,7 +129,7 @@ export function ImportInvoicesDialog({
       <div className="relative z-10 w-full max-w-3xl rounded-xl border border-border bg-background shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
-          <h2 className="text-lg font-semibold">Import Invoices from CSV</h2>
+          <h2 className="text-lg font-semibold">{t("import.title")}</h2>
           {step !== "importing" && (
             <button
               type="button"
@@ -145,17 +149,17 @@ export function ImportInvoicesDialog({
               <div className="rounded-lg border border-border bg-muted/30 p-4 flex items-start gap-3">
                 <Download className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">CSV template</p>
+                  <p className="text-sm font-medium">{t("import.templateTitle")}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Download the template to see the correct format. Multiple rows with the same{" "}
-                    <code className="text-xs bg-muted px-1 rounded">invoiceNumber</code> are merged into a single invoice with multiple lines.
+                    {t("import.templateDescriptionPrefix")}{" "}
+                    <code className="text-xs bg-muted px-1 rounded">invoiceNumber</code> {t("import.templateDescriptionSuffix")}
                   </p>
                   <button
                     type="button"
                     onClick={downloadTemplate}
                     className="mt-2 text-sm font-medium text-primary hover:underline"
                   >
-                    Download invoice-import-template.csv
+                    {t("import.downloadTemplate")}
                   </button>
                 </div>
               </div>
@@ -165,31 +169,33 @@ export function ImportInvoicesDialog({
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Column</th>
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Required</th>
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Format / example</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.columnHeaders.column")}</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.columnHeaders.required")}</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.columnHeaders.format")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[
-                      ["invoiceDate", "Yes", "YYYY-MM-DD  e.g. 2026-02-01"],
-                      ["dueDate", "Yes", "YYYY-MM-DD  e.g. 2026-03-03"],
-                      ["customerName", "Yes", "Must match exact customer name in the system"],
-                      ["description", "Yes", "Description of line item"],
-                      ["quantity", "No", "Quantity (default: 1)"],
-                      ["unitPrice", "No", "Unit price excl. VAT (default: 0)"],
-                      ["vatRate", "No", "0 | 6 | 12 | 25  (default: 25)"],
-                      ["invoiceNumber", "No", "Leave empty for auto. Same number = same invoice"],
-                      ["currency", "No", "SEK | EUR | USD  (default: SEK)"],
-                      ["overdueInterestRate", "No", "Late payment interest % (default: 8)"],
-                      ["notes", "No", "Free text"],
-                      ["isInternational", "No", "true | false  (default: false)"],
-                      ["language", "No", "sv | en  (default: sv)"],
-                    ].map(([col, req, fmt]) => (
+                    {(
+                      [
+                        ["invoiceDate", true],
+                        ["dueDate", true],
+                        ["customerName", true],
+                        ["description", true],
+                        ["quantity", false],
+                        ["unitPrice", false],
+                        ["vatRate", false],
+                        ["invoiceNumber", false],
+                        ["currency", false],
+                        ["overdueInterestRate", false],
+                        ["notes", false],
+                        ["isInternational", false],
+                        ["language", false],
+                      ] as const
+                    ).map(([col, required]) => (
                       <tr key={col} className="border-b border-border last:border-b-0">
                         <td className="px-3 py-2 font-mono">{col}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{req}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{fmt}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{required ? t("import.required.yes") : t("import.required.no")}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{t(`import.columnDescriptions.${col}`)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -209,8 +215,8 @@ export function ImportInvoicesDialog({
                 }`}
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">Drag and drop CSV file here</p>
-                <p className="text-xs text-muted-foreground">or click to select a file</p>
+                <p className="text-sm font-medium">{t("import.dropHere")}</p>
+                <p className="text-xs text-muted-foreground">{t("import.clickToSelect")}</p>
                 <input
                   ref={fileRef}
                   type="file"
@@ -224,7 +230,7 @@ export function ImportInvoicesDialog({
               {parseErrors.length > 0 && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-1">
                   <p className="text-sm font-medium text-red-700 flex items-center gap-1.5">
-                    <AlertTriangle className="h-4 w-4" /> Errors in CSV file
+                    <AlertTriangle className="h-4 w-4" /> {t("import.errorsTitle")}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {parseErrors.map((e, i) => (
@@ -241,15 +247,14 @@ export function ImportInvoicesDialog({
             <>
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{parsedInvoices.length}</span>{" "}
-                  invoice{parsedInvoices.length !== 1 ? "s" : ""} found in file
+                  {t("import.found", { count: parsedInvoices.length })}
                 </p>
                 <button
                   type="button"
                   onClick={() => { setStep("upload"); setParsedInvoices([]); setParseErrors([]); setParseWarnings([]); if (fileRef.current) fileRef.current.value = ""; }}
                   className="text-sm text-muted-foreground hover:text-foreground underline"
                 >
-                  Change file
+                  {t("import.changeFile")}
                 </button>
               </div>
 
@@ -257,7 +262,7 @@ export function ImportInvoicesDialog({
               {parseWarnings.length > 0 && (
                 <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-1">
                   <p className="text-sm font-medium text-yellow-700 flex items-center gap-1.5">
-                    <AlertTriangle className="h-4 w-4" /> Warnings
+                    <AlertTriangle className="h-4 w-4" /> {t("import.warningsTitle")}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {parseWarnings.map((w, i) => (
@@ -272,14 +277,14 @@ export function ImportInvoicesDialog({
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Date</th>
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Customer</th>
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Invoice #</th>
-                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">Lines</th>
-                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">Excl. VAT</th>
-                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">VAT</th>
-                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">Total</th>
-                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">Status</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.previewColumns.date")}</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.previewColumns.customer")}</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.previewColumns.invoiceNumber")}</th>
+                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">{t("import.previewColumns.lines")}</th>
+                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">{t("import.previewColumns.exclVat")}</th>
+                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">{t("import.previewColumns.vat")}</th>
+                      <th className="px-3 py-2 text-right font-medium text-muted-foreground">{t("import.previewColumns.total")}</th>
+                      <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("import.previewColumns.status")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -292,26 +297,26 @@ export function ImportInvoicesDialog({
                           </span>
                         </td>
                         <td className="px-3 py-2 font-mono text-xs text-muted-foreground">
-                          {inv.invoiceNumber || <span className="italic">auto</span>}
+                          {inv.invoiceNumber || <span className="italic">{t("import.auto")}</span>}
                         </td>
                         <td className="px-3 py-2 text-right text-muted-foreground">{inv.items.length}</td>
                         <td className="px-3 py-2 text-right tabular-nums">
-                          {inv.subtotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                          {inv.subtotal.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                          {inv.vatAmount.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                          {inv.vatAmount.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums font-medium">
-                          {inv.totalAmount.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} {inv.currency}
+                          {inv.totalAmount.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })} {inv.currency}
                         </td>
                         <td className="px-3 py-2">
                           {inv.customerId ? (
                             <span className="inline-flex items-center gap-1 text-xs text-green-700">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> OK
+                              <CheckCircle2 className="h-3.5 w-3.5" /> {t("import.ok")}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-xs text-yellow-600">
-                              <AlertTriangle className="h-3.5 w-3.5" /> Customer missing
+                              <AlertTriangle className="h-3.5 w-3.5" /> {t("import.customerMissing")}
                             </span>
                           )}
                         </td>
@@ -321,15 +326,15 @@ export function ImportInvoicesDialog({
                   {parsedInvoices.length > 0 && (
                     <tfoot>
                       <tr className="bg-muted/30 border-t border-border">
-                        <td colSpan={4} className="px-3 py-2 text-sm font-medium text-muted-foreground">Totalt</td>
+                        <td colSpan={4} className="px-3 py-2 text-sm font-medium text-muted-foreground">{t("import.totalRow")}</td>
                         <td className="px-3 py-2 text-right tabular-nums font-medium">
-                          {parsedInvoices.reduce((s, inv) => s + inv.subtotal, 0).toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                          {parsedInvoices.reduce((s, inv) => s + inv.subtotal, 0).toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums font-medium text-muted-foreground">
-                          {parsedInvoices.reduce((s, inv) => s + inv.vatAmount, 0).toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                          {parsedInvoices.reduce((s, inv) => s + inv.vatAmount, 0).toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums font-medium">
-                          {parsedInvoices.reduce((s, inv) => s + inv.totalAmount, 0).toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                          {parsedInvoices.reduce((s, inv) => s + inv.totalAmount, 0).toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                         </td>
                         <td />
                       </tr>
@@ -340,7 +345,7 @@ export function ImportInvoicesDialog({
 
               {parsedInvoices.some((inv) => !inv.customerId) && (
                 <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
-                  Invoices with unknown customers will be imported without a customer link and must be updated manually.
+                  {t("import.unmatchedNotice")}
                 </p>
               )}
             </>
@@ -351,7 +356,7 @@ export function ImportInvoicesDialog({
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm font-medium">
-                Importing invoice {importProgress} of {importTotal}…
+                {t("import.progress", { current: importProgress, total: importTotal })}
               </p>
               <div className="w-full max-w-xs rounded-full bg-muted h-2 overflow-hidden">
                 <div
@@ -367,11 +372,11 @@ export function ImportInvoicesDialog({
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-10 w-10 text-green-600" />
               <p className="text-base font-semibold">
-                {importTotal - importErrors.length} of {importTotal} invoices imported!
+                {t("import.doneSummary", { imported: importTotal - importErrors.length, total: importTotal })}
               </p>
               {importErrors.length > 0 && (
                 <div className="w-full rounded-lg border border-red-200 bg-red-50 p-4 space-y-1">
-                  <p className="text-sm font-medium text-red-700">Errors during import:</p>
+                  <p className="text-sm font-medium text-red-700">{t("import.importErrorsTitle")}</p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {importErrors.map((e, i) => (
                       <li key={i} className="text-sm text-red-600">{e}</li>
@@ -391,7 +396,7 @@ export function ImportInvoicesDialog({
               onClick={onClose}
               className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              Cancel
+              {t("import.cancel")}
             </button>
           )}
           {step === "preview" && (
@@ -401,14 +406,14 @@ export function ImportInvoicesDialog({
                 onClick={onClose}
                 className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
               >
-                Cancel
+                {t("import.cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleImport}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Import {parsedInvoices.length} invoice{parsedInvoices.length !== 1 ? "s" : ""}
+                {t("import.import", { count: parsedInvoices.length })}
               </button>
             </>
           )}
@@ -418,7 +423,7 @@ export function ImportInvoicesDialog({
               onClick={onClose}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Close
+              {t("import.close")}
             </button>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/page-container";
 import { AddCustomerDialog } from "@/features/customers/components/add-customer-dialog";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/customers/")({
 });
 
 function CustomersPage() {
+  const { t } = useTranslation("customers");
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -43,8 +45,8 @@ function CustomersPage() {
 
   return (
     <PageContainer
-      title="Customers"
-      description="Manage your customers and leads"
+      title={t("page.title")}
+      description={t("page.description")}
     >
       <div className="mb-4 flex justify-end">
         <button
@@ -52,7 +54,7 @@ function CustomersPage() {
           className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          Add Customer
+          {t("page.addCustomer")}
         </button>
       </div>
 

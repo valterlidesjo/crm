@@ -33,9 +33,20 @@ Internal CRM system built as a monorepo with npm workspaces. Handles customer pr
 
 Strict mode enabled. Shared base config in `tsconfig.base.json`. Each package extends it. Target ES2022 with bundler module resolution.
 
-## Language
+## Internationalization (i18n)
 
-All UI text, labels, error messages, and user-facing strings must be in **English**, regardless of the language used in the prompt or request. This applies to all new features and changes.
+The app is fully internationalized with **react-i18next** (English + Swedish). Users switch language live via the sidebar footer switcher; the choice persists in `localStorage["crm-language"]`. **Default language is Swedish, fallback English.**
+
+- **Never hardcode user-facing strings.** Every label, heading, placeholder, button, toast/error/validation message must come from a translation key.
+- **Config:** `packages/web/src/i18n/config.ts` (i18next init + namespace registration). Hook + `currentLocale()` in `packages/web/src/i18n/index.ts`.
+- **Translation files:** `packages/web/src/i18n/locales/{en,sv}/<namespace>.json` — **one namespace per feature** (`common`, `nav`, `auth`, `dashboard`, `customers`, `accounting`, …). Generic words (Save/Cancel/Delete/Loading/Add/Search) live in `common`.
+- **Usage:** `const { t } = useTranslation("<feature>");` then `t("nested.key")`. Reuse other namespaces with `useTranslation(["feature","common"])` + `t("common:actions.save")`. Use `<Trans>` for embedded links; i18next interpolation (`{{name}}`) for variables; `_one`/`_other` suffix keys for plurals (never inline ternaries).
+- **Non-component code** (utils/hooks) gets `t` via `import i18n from "@/i18n"; const t = i18n.getFixedT(null, "<ns>")`.
+- **Enum labels** from `@crm/shared` (`*_LABELS`): render via `t("<ns>:status.<key>")` keyed by the enum key; do **not** translate the shared enum constants themselves.
+- **Adding a key:** put the English value (exact wording) in `en/<ns>.json` and a natural Swedish translation in `sv/<ns>.json`. When adding a new namespace, register it in `config.ts`.
+- **Formatting:** display number/date formatters use `currentLocale()` (sv-SE ↔ en-US) via `lib/format.ts` or directly. **Exceptions left fixed:** PDF generators (driven by each document's own `language` field) and CSV export (data serialization).
+- **Tests** run in English (`src/test/setup.ts` forces `en`); English JSON values match the original wording so assertions hold. Tests needing Swedish call `i18n.changeLanguage("sv")` locally (see `lib/format.test.ts`).
+- When asked to add UI in any language, still author it as i18n keys with both English and Swedish values.
 
 ## Key Patterns
 

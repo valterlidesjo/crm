@@ -1,33 +1,29 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { usePartner } from "@/lib/partner";
 import { useProducts } from "../hooks/use-products";
-import { X, Plus, Trash2, Upload, ImageIcon } from "lucide-react";
-
-interface VariantRow {
-  title: string;
-  price: string;
-  stock: string;
-  sku: string;
-}
+import { X, Upload, ImageIcon } from "lucide-react";
 
 interface AddProductDialogProps {
   onClose: () => void;
 }
 
 export function AddProductDialog({ onClose }: AddProductDialogProps) {
+  const { t } = useTranslation("inventory");
   const { partnerId } = usePartner();
   const { addProduct } = useProducts();
 
   const [title, setTitle] = useState("");
+  const [groupTitle, setGroupTitle] = useState("");
+  const [sku, setSku] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("0");
   const [description, setDescription] = useState("");
   const [vendor, setVendor] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [variants, setVariants] = useState<VariantRow[]>([
-    { title: "", price: "", stock: "0", sku: "" },
-  ]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,23 +33,6 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
     if (!file) return;
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
-  }
-
-  function addVariant() {
-    setVariants((prev) => [
-      ...prev,
-      { title: "", price: "", stock: "0", sku: "" },
-    ]);
-  }
-
-  function removeVariant(index: number) {
-    setVariants((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateVariant(index: number, field: keyof VariantRow, value: string) {
-    setVariants((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
-    );
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -77,23 +56,19 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
 
       await addProduct({
         title: title.trim(),
+        groupTitle: groupTitle.trim() || undefined,
+        sku: sku.trim() || undefined,
+        price: price ? parseFloat(price) : undefined,
+        stock: parseInt(stock, 10) || 0,
         description: description.trim() || undefined,
         vendor: vendor.trim() || undefined,
         imageUrl,
         status: "active",
-        variants: variants
-          .filter((v) => v.title.trim())
-          .map((v) => ({
-            title: v.title.trim(),
-            sku: v.sku.trim() || undefined,
-            price: v.price ? parseFloat(v.price) : undefined,
-            stock: parseInt(v.stock, 10) || 0,
-          })),
       });
 
       onClose();
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError(t("addProduct.error"));
       console.error(err);
     } finally {
       setSaving(false);
@@ -105,7 +80,7 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-background shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 className="text-lg font-semibold">New product</h2>
+          <h2 className="text-lg font-semibold">{t("addProduct.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -120,40 +95,91 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium">
-                Title <span className="text-red-500">*</span>
+                {t("addProduct.fieldTitle")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
-                placeholder="e.g. Round mirror"
+                placeholder={t("addProduct.titlePlaceholder")}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">{t("addProduct.fieldSku")}</label>
+              <input
+                type="text"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder={t("addProduct.skuPlaceholder")}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Vendor / Brand
+                {t("addProduct.fieldGroup")}
+              </label>
+              <input
+                type="text"
+                value={groupTitle}
+                onChange={(e) => setGroupTitle(e.target.value)}
+                placeholder={t("addProduct.groupPlaceholder")}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("addProduct.fieldPrice")}
+              </label>
+              <input
+                type="number"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0"
+                min="0"
+                step="1"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">{t("addProduct.fieldStock")}</label>
+              <input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                placeholder="0"
+                min="0"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("addProduct.fieldVendor")}
               </label>
               <input
                 type="text"
                 value={vendor}
                 onChange={(e) => setVendor(e.target.value)}
-                placeholder="Optional"
+                placeholder={t("addProduct.vendorPlaceholder")}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
 
-            <div>
+            <div className="sm:col-span-2">
               <label className="mb-1.5 block text-sm font-medium">
-                Description
+                {t("addProduct.fieldDescription")}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
-                placeholder="Optional"
+                placeholder={t("addProduct.descriptionPlaceholder")}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30 resize-none"
               />
             </div>
@@ -162,7 +188,7 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
           {/* Image upload */}
           <div>
             <label className="mb-1.5 block text-sm font-medium">
-              Product image
+              {t("addProduct.fieldImage")}
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
@@ -178,10 +204,10 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
                 <>
                   <ImageIcon className="mb-2 h-8 w-8 text-muted-foreground/50" />
                   <p className="text-sm text-muted-foreground">
-                    Click to upload image
+                    {t("addProduct.clickToUpload")}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground/70">
-                    PNG, JPG, WEBP
+                    {t("addProduct.imageFormats")}
                   </p>
                 </>
               )}
@@ -195,7 +221,7 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
                 }}
                 className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Upload className="h-3 w-3" /> Change image
+                <Upload className="h-3 w-3" /> {t("addProduct.changeImage")}
               </button>
             )}
             <input
@@ -207,76 +233,6 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
             />
           </div>
 
-          {/* Variants */}
-          <div>
-            <div className="mb-2 flex items-center justify-between">
-              <label className="text-sm font-medium">Variants</label>
-              <button
-                type="button"
-                onClick={addVariant}
-                className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add variant
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
-                <span className="col-span-4">Name (e.g. 50cm)</span>
-                <span className="col-span-2">SKU</span>
-                <span className="col-span-2">Price (kr)</span>
-                <span className="col-span-2">Stock</span>
-                <span className="col-span-2" />
-              </div>
-
-              {variants.map((variant, i) => (
-                <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                  <input
-                    type="text"
-                    value={variant.title}
-                    onChange={(e) => updateVariant(i, "title", e.target.value)}
-                    placeholder="50cm"
-                    className="col-span-4 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <input
-                    type="text"
-                    value={variant.sku}
-                    onChange={(e) => updateVariant(i, "sku", e.target.value)}
-                    placeholder="SPG-50"
-                    className="col-span-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <input
-                    type="number"
-                    value={variant.price}
-                    onChange={(e) => updateVariant(i, "price", e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    step="1"
-                    className="col-span-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <input
-                    type="number"
-                    value={variant.stock}
-                    onChange={(e) => updateVariant(i, "stock", e.target.value)}
-                    placeholder="0"
-                    min="0"
-                    className="col-span-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <div className="col-span-2 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => removeVariant(i)}
-                      disabled={variants.length === 1}
-                      className="rounded p-1 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-30"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {error && <p className="text-sm text-red-500">{error}</p>}
 
           {/* Footer */}
@@ -286,14 +242,14 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
               onClick={onClose}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              Cancel
+              {t("addProduct.cancel")}
             </button>
             <button
               type="submit"
               disabled={saving || !title.trim()}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save product"}
+              {saving ? t("addProduct.saving") : t("addProduct.save")}
             </button>
           </div>
         </form>

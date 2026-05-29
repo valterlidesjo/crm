@@ -1,0 +1,36 @@
+{
+  "page": {
+    "title": "Ordrar",
+    "description": "Shopify-ordrar synkade till CRM via webhooks"
+  },
+  "filter": {
+    "statusLabel": "Status",
+    "allStatuses": "Alla statusar"
+  },
+  "status": {
+    "pending": "Väntande",
+    "paid": "Betald",
+    "fulfilled": "Levererad",
+    "cancelled": "Avbruten",
+    "refunded": "Återbetald"
+  },
+  "states": {
+    "loading": "Laddar ordrar...",
+    "empty": "Inga ordrar hittades."
+  },
+  "table": {
+    "order": "Order",
+    "source": "Källa",
+    "date": "Datum",
+    "status": "Status",
+    "customer": "Kund",
+    "total": "Totalt"
+  },
+  "lineItems": {
+    "product": "Produkt",
+    "variant": "Variant",
+    "sku": "SKU",
+    "qty": "Antal",
+    "unitPrice": "Styckpris"
+  }
+}

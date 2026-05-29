@@ -49,20 +49,21 @@ async function getUserPermissions(
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>({ status: "loading" });
+  const [state, setState] = useState<AuthState>(() =>
+    import.meta.env.VITE_DISABLE_AUTH === "true"
+      ? {
+          status: "authenticated",
+          user: { email: "test@test.com" } as User,
+          role: "admin",
+          email: "test@test.com",
+          partnerId: import.meta.env.VITE_DEV_PARTNER_ID || "dev",
+          platformRole: "superAdmin",
+        }
+      : { status: "loading" }
+  );
 
   useEffect(() => {
-    if (import.meta.env.VITE_DISABLE_AUTH === "true") {
-      setState({
-        status: "authenticated",
-        user: { email: "test@test.com" } as User,
-        role: "admin",
-        email: "test@test.com",
-        partnerId: import.meta.env.VITE_DEV_PARTNER_ID || "dev",
-        platformRole: "superAdmin",
-      });
-      return;
-    }
+    if (import.meta.env.VITE_DISABLE_AUTH === "true") return;
 
     return onAuthStateChanged(auth, async (user) => {
       if (!user?.email || !user?.uid) {

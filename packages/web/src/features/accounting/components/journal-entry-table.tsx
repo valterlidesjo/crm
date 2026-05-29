@@ -1,130 +1,50 @@
-import { useState } from "react";
-import type { JournalEntry } from "@crm/shared";
+import type { JournalEntry, JournalEntrySource } from "@crm/shared";
 import { ACCOUNT_CATEGORIES } from "@crm/shared";
-import { ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { formatAmount } from "../utils/format";
 
 interface JournalEntryTableProps {
   entries: JournalEntry[];
   onEdit: (entry: JournalEntry) => void;
-  onDelete: (id: string) => void;
+  onDelete: (entry: JournalEntry) => void;
 }
 
 function getCategoryName(categoryId: string): string {
   return ACCOUNT_CATEGORIES.find((c) => c.id === categoryId)?.name ?? categoryId;
 }
 
-function EntryRow({
-  entry,
-  index,
-  onEdit,
-  onDelete,
-}: {
-  entry: JournalEntry;
-  index: number;
-  onEdit: (entry: JournalEntry) => void;
-  onDelete: (id: string) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
+const SOURCE_LABEL_KEYS: Record<JournalEntrySource, string> = {
+  manual: "entries.source.manual",
+  import: "entries.source.import",
+  invoice: "entries.source.invoice",
+  "purchase-order": "entries.source.purchaseOrder",
+  shopify: "entries.source.shopify",
+};
 
+function SourceBadge({ source }: { source: JournalEntry["source"] }) {
+  const { t } = useTranslation("accounting");
+  // Legacy entries with no source are treated as manual.
+  const key: JournalEntrySource = source ?? "manual";
+  if (key === "manual") return null;
   return (
-    <>
-      <tr
-        className="cursor-pointer border-b border-border hover:bg-muted/50"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <td className="px-3 py-2 text-sm text-muted-foreground font-mono">
-          #{index}
-        </td>
-        <td className="px-3 py-2 text-sm">
-          {expanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-        </td>
-        <td className="px-3 py-2 text-sm">{entry.date}</td>
-        <td className="px-3 py-2 text-sm">{entry.description || "\u2014"}</td>
-        <td className="px-3 py-2 text-sm">{getCategoryName(entry.category)}</td>
-        <td className={cn(
-          "px-3 py-2 text-sm font-medium",
-          entry.transactionType === "cost" ? "text-red-600" : "text-green-600"
-        )}>
-          {entry.transactionType === "cost" ? "\u2212" : "+"}{formatAmount(entry.totalAmount)} kr
-        </td>
-        <td className="px-3 py-2 text-sm text-muted-foreground">
-          {entry.vatRate}% ({formatAmount(entry.vatAmount)} kr)
-        </td>
-        <td className="px-3 py-2 text-sm">
-          <div className="flex gap-1">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onEdit(entry); }}
-              className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Edit"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
-              className="rounded p-1 text-muted-foreground hover:bg-red-100 hover:text-red-600 transition-colors"
-              title="Delete"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
-        </td>
-      </tr>
-      {expanded && (
-        <tr className="border-b border-border bg-muted/30">
-          <td colSpan={8} className="px-3 py-2">
-            <table className="w-full">
-              <thead>
-                <tr className="text-xs text-muted-foreground">
-                  <th className="px-2 py-1 text-left">Account</th>
-                  <th className="px-2 py-1 text-left">Account Name</th>
-                  <th className="px-2 py-1 text-right">Debit</th>
-                  <th className="px-2 py-1 text-right">Credit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {entry.lines.map((line, i) => (
-                  <tr key={i} className="text-sm">
-                    <td className="px-2 py-1 font-mono">{line.accountNumber}</td>
-                    <td className="px-2 py-1">{line.accountName}</td>
-                    <td className="px-2 py-1 text-right">
-                      {line.debit > 0 ? formatAmount(line.debit) : ""}
-                    </td>
-                    <td className="px-2 py-1 text-right">
-                      {line.credit > 0 ? formatAmount(line.credit) : ""}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="text-sm font-medium border-t border-border">
-                  <td colSpan={2} className="px-2 py-1">Total</td>
-                  <td className="px-2 py-1 text-right">
-                    {formatAmount(entry.lines.reduce((sum, l) => sum + l.debit, 0))}
-                  </td>
-                  <td className="px-2 py-1 text-right">
-                    {formatAmount(entry.lines.reduce((sum, l) => sum + l.credit, 0))}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      )}
-    </>
+    <span className="ml-2 rounded-full border border-border bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground align-middle">
+      {t(SOURCE_LABEL_KEYS[key])}
+    </span>
   );
 }
 
-export function JournalEntryTable({ entries, onEdit, onDelete }: JournalEntryTableProps) {
+export function JournalEntryTable({
+  entries,
+  onEdit,
+  onDelete,
+}: JournalEntryTableProps) {
+  const { t } = useTranslation("accounting");
   if (entries.length === 0) {
     return (
       <div className="rounded-lg border border-border p-8 text-center text-muted-foreground">
-        No verifications yet. Add a transaction above.
+        {t("entries.empty")}
       </div>
     );
   }
@@ -132,28 +52,65 @@ export function JournalEntryTable({ entries, onEdit, onDelete }: JournalEntryTab
   return (
     <div className="overflow-x-auto rounded-lg border border-border">
       <table className="w-full">
-        <thead className="bg-muted">
-          <tr className="text-sm font-medium">
-            <th className="w-12 px-3 py-2 text-left">#</th>
-            <th className="w-8 px-3 py-2" />
-            <th className="px-3 py-2 text-left">Date</th>
-            <th className="px-3 py-2 text-left">Description</th>
-            <th className="px-3 py-2 text-left">Category</th>
-            <th className="px-3 py-2 text-left">Amount</th>
-            <th className="px-3 py-2 text-left">VAT</th>
-            <th className="w-20 px-3 py-2" />
+        <thead className="border-b border-border">
+          <tr className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <th className="px-3 py-2 text-left">{t("entries.columnDate")}</th>
+            <th className="px-3 py-2 text-left">{t("entries.columnDescription")}</th>
+            <th className="px-3 py-2 text-left">{t("entries.columnCategory")}</th>
+            <th className="px-3 py-2 text-right">{t("entries.columnAmount")}</th>
+            <th className="w-16 px-3 py-2" />
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry, i) => (
-            <EntryRow
-              key={entry.id}
-              entry={entry}
-              index={entries.length - i}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
+          {entries.map((entry) => {
+            const isCost = entry.transactionType === "cost";
+            return (
+              <tr
+                key={entry.id}
+                className="border-b border-border last:border-0 hover:bg-muted/40"
+              >
+                <td className="whitespace-nowrap px-3 py-2 text-sm text-muted-foreground">
+                  {entry.date}
+                </td>
+                <td className="px-3 py-2 text-sm">
+                  {entry.description || "—"}
+                  <SourceBadge source={entry.source} />
+                </td>
+                <td className="px-3 py-2 text-sm text-muted-foreground">
+                  {getCategoryName(entry.category)}
+                </td>
+                <td
+                  className={cn(
+                    "whitespace-nowrap px-3 py-2 text-right text-sm font-medium tabular-nums",
+                    isCost ? "text-red-600" : "text-green-600"
+                  )}
+                >
+                  {isCost ? "−" : "+"}
+                  {formatAmount(entry.totalAmount)} kr
+                </td>
+                <td className="px-3 py-2">
+                  <div className="flex justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(entry)}
+                      className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      title={t("entries.editTitle")}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(entry)}
+                      className="rounded p-1 text-muted-foreground hover:bg-red-100 hover:text-red-600 transition-colors"
+                      title={t("entries.deleteTitle")}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

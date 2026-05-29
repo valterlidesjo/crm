@@ -1,0 +1,31 @@
+{
+  "brand": "VersatileCRM",
+  "actions": {
+    "save": "Spara",
+    "cancel": "Avbryt",
+    "delete": "Ta bort",
+    "edit": "Redigera",
+    "close": "Stäng",
+    "add": "Lägg till",
+    "search": "Sök",
+    "confirm": "Bekräfta",
+    "logout": "Logga ut",
+    "openMenu": "Öppna meny",
+    "closeMenu": "Stäng meny"
+  },
+  "language": {
+    "label": "Språk",
+    "en": "English",
+    "sv": "Svenska"
+  },
+  "emulation": {
+    "exit": "Avsluta emulering",
+    "unknownPartner": "Okänd partner",
+    "featureDisabledShort": "{{name}} (funktion inaktiverad)",
+    "featureDisabledLong": "{{name}} — funktion inaktiverad för denna partner",
+    "featureDisabled": "Funktion inaktiverad"
+  },
+  "states": {
+    "loading": "Laddar…"
+  }
+}

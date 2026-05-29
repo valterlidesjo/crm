@@ -30,29 +30,26 @@ export function calculateShopifyOrderCount(entries: JournalEntry[]): number {
   return entries.filter((e) => e.source === "shopify").length;
 }
 
-/** Inventory value at retail price: Σ (stock × price) across all active products. */
+/** Inventory value at retail price: Σ (stock × price) across all active articles. */
 export function calculateInventoryRetailValue(products: Product[]): number {
   return products
     .filter((p) => p.status === "active")
-    .flatMap((p) => p.variants)
-    .reduce((sum, v) => sum + v.stock * (v.price ?? 0), 0);
+    .reduce((sum, p) => sum + p.stock * (p.price ?? 0), 0);
 }
 
-/** Inventory value at cost price: Σ (stock × costPrice) across all active products.
- *  Returns 0 for variants without costPrice — will show accurate values once TODO-D3 data exists. */
+/** Inventory value at cost price: Σ (stock × costPrice) across all active articles.
+ *  Returns 0 for articles without costPrice. */
 export function calculateInventoryCostValue(products: Product[]): number {
   return products
     .filter((p) => p.status === "active")
-    .flatMap((p) => p.variants)
-    .reduce((sum, v) => sum + v.stock * (v.costPrice ?? 0), 0);
+    .reduce((sum, p) => sum + p.stock * (p.costPrice ?? 0), 0);
 }
 
-/** Total stock units across all active products. */
+/** Total stock units across all active articles. */
 export function calculateInventoryUnitCount(products: Product[]): number {
   return products
     .filter((p) => p.status === "active")
-    .flatMap((p) => p.variants)
-    .reduce((sum, v) => sum + v.stock, 0);
+    .reduce((sum, p) => sum + p.stock, 0);
 }
 
 /**

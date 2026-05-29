@@ -1,0 +1,31 @@
+{
+  "brand": "VersatileCRM",
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "add": "Add",
+    "search": "Search",
+    "confirm": "Confirm",
+    "logout": "Logout",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "sv": "Svenska"
+  },
+  "emulation": {
+    "exit": "Exit emulation",
+    "unknownPartner": "Unknown partner",
+    "featureDisabledShort": "{{name}} (feature disabled)",
+    "featureDisabledLong": "{{name}} — feature disabled for this partner",
+    "featureDisabled": "Feature disabled"
+  },
+  "states": {
+    "loading": "Loading…"
+  }
+}

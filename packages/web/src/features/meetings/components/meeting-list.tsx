@@ -1,4 +1,6 @@
 import type { Meeting } from "@crm/shared";
+import { useTranslation } from "react-i18next";
+import { currentLocale } from "@/i18n";
 import {
   Calendar,
   MapPin,
@@ -17,7 +19,7 @@ interface MeetingListProps {
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString("sv-SE", {
+  return date.toLocaleTimeString(currentLocale(), {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -39,6 +41,7 @@ export function MeetingList({
   onEdit,
   customers,
 }: MeetingListProps) {
+  const { t } = useTranslation("meetings");
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -52,10 +55,10 @@ export function MeetingList({
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-12">
         <Calendar className="h-12 w-12 text-muted-foreground/50" />
         <h3 className="mt-4 text-lg font-medium text-foreground">
-          No meetings scheduled
+          {t("list.emptyTitle")}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Schedule a meeting to get started
+          {t("list.emptyDescription")}
         </p>
       </div>
     );
@@ -92,8 +95,8 @@ export function MeetingList({
               className={`mb-3 text-sm font-medium text-muted-foreground ${todayClass}`}
             >
               {isToday(dateKey)
-                ? "Today"
-                : dateObj.toLocaleDateString("sv-SE", {
+                ? t("list.today")
+                : dateObj.toLocaleDateString(currentLocale(), {
                     weekday: "long",
                     month: "long",
                     day: "numeric",
@@ -127,6 +130,7 @@ interface MeetingCardProps {
 }
 
 function MeetingCard({ meeting, onEdit, customerName }: MeetingCardProps) {
+  const { t } = useTranslation("meetings");
   const past = isPast(meeting.endTime);
   const isSynced = !!meeting.googleCalendarEventId;
 
@@ -153,7 +157,7 @@ function MeetingCard({ meeting, onEdit, customerName }: MeetingCardProps) {
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4 flex-shrink-0" />
             {meeting.allDay ? (
-              <span>All day</span>
+              <span>{t("list.allDay")}</span>
             ) : (
               <span>
                 {formatTime(meeting.startTime)} - {formatTime(meeting.endTime)}
@@ -174,8 +178,7 @@ function MeetingCard({ meeting, onEdit, customerName }: MeetingCardProps) {
             <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
               <Users className="h-4 w-4 flex-shrink-0" />
               <span>
-                {meeting.attendees.length} attendee
-                {meeting.attendees.length !== 1 ? "s" : ""}
+                {t("list.attendees", { count: meeting.attendees.length })}
               </span>
             </div>
           )}

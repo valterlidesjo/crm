@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, UserPlus, Type } from "lucide-react";
 import { useCustomers } from "@/features/customers/hooks/use-customers";
 import { AddCustomerDialog } from "@/features/customers/components/add-customer-dialog";
@@ -10,6 +11,7 @@ import { calcQuoteTotals, type QuoteLineData, type CostEntry } from "../utils/ca
 import { generateQuotePdf } from "../utils/generate-quote-pdf";
 import { fetchLogoDataUrl } from "@/lib/logo-data-url";
 import { useProductSuggestions } from "@/features/invoices/hooks/use-product-suggestions";
+import { currentLocale } from "@/i18n";
 import type { VatRateType, BillingFrequency, Quote, Customer } from "@crm/shared";
 
 const INPUT_CLASS =
@@ -35,6 +37,7 @@ interface QuoteFormProps {
 }
 
 export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
+  const { t } = useTranslation("quotes");
   const { customers, addCustomer } = useCustomers();
   const { profile } = useCompanyProfile();
   const { addQuote, updateQuote, generateQuoteNumber } = useQuotes();
@@ -100,7 +103,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
 
   function handleSelectProduct(
     index: number,
-    data: Pick<QuoteLineData, "description" | "unitPrice" | "productId" | "variantId" | "sku">
+    data: Pick<QuoteLineData, "description" | "unitPrice" | "productId" | "sku">
   ) {
     setItems((prev) => {
       const updated = [...prev];
@@ -245,7 +248,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
       {/* Customer & Quote Details */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
-          <label className="mb-1 block text-sm font-medium">Customer</label>
+          <label className="mb-1 block text-sm font-medium">{t("form.customer")}</label>
           <div className="flex gap-2">
             <select
               className={INPUT_CLASS}
@@ -253,7 +256,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
               onChange={(e) => setCustomerId(e.target.value)}
               required
             >
-              <option value="">Select customer...</option>
+              <option value="">{t("form.selectCustomer")}</option>
               {customers.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -264,7 +267,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
               type="button"
               onClick={() => setShowAddCustomer(true)}
               className="shrink-0 flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              title="Add new customer"
+              title={t("form.addCustomer")}
             >
               <UserPlus className="h-4 w-4" />
             </button>
@@ -278,7 +281,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Valid Until</label>
+          <label className="mb-1 block text-sm font-medium">{t("form.validUntil")}</label>
           <input
             className={INPUT_CLASS}
             type="date"
@@ -296,25 +299,25 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             <tr className="border-b border-border bg-muted/30">
               <th className="py-2 pl-2 w-6" />
               <th className="py-2 pr-2 text-left font-medium text-muted-foreground">
-                Description
+                {t("form.columns.description")}
               </th>
               <th className="py-2 px-2 text-right font-medium text-muted-foreground w-20">
-                Qty
+                {t("form.columns.qty")}
               </th>
               <th className="py-2 px-2 text-right font-medium text-muted-foreground w-28">
-                Unit Price
+                {t("form.columns.unitPrice")}
               </th>
               <th className="py-2 px-2 text-left font-medium text-muted-foreground w-24">
-                VAT
+                {t("form.columns.vat")}
               </th>
               <th className="py-2 px-2 text-left font-medium text-muted-foreground w-28">
-                Billing
+                {t("form.columns.billing")}
               </th>
               <th className="py-2 px-2 text-right font-medium text-muted-foreground">
-                Total
+                {t("form.columns.total")}
               </th>
               <th className="py-2 px-2 text-right font-medium text-muted-foreground">
-                VAT Amt
+                {t("form.columns.vatAmt")}
               </th>
               <th className="py-2 pl-2 pr-4 w-10" />
             </tr>
@@ -346,7 +349,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             <Plus className="h-4 w-4" />
-            Add line
+            {t("form.addLine")}
           </button>
           <button
             type="button"
@@ -354,7 +357,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             <Type className="h-4 w-4" />
-            Add text
+            {t("form.addText")}
           </button>
         </div>
       </div>
@@ -363,9 +366,9 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
       <div className="flex justify-end">
         <div className="w-full max-w-xs space-y-1 rounded-lg border border-border bg-background p-4 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{t("form.subtotal")}</span>
             <span className="tabular-nums">
-              {totals.subtotal.toLocaleString("sv-SE", {
+              {totals.subtotal.toLocaleString(currentLocale(), {
                 minimumFractionDigits: 2,
               })}{" "}
               {currency}
@@ -373,9 +376,9 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
           </div>
           {totals.vatBreakdown.map((entry) => (
             <div key={entry.rate} className="flex justify-between text-muted-foreground">
-              <span>VAT {entry.rate}%</span>
+              <span>{t("form.vatRate", { rate: entry.rate })}</span>
               <span className="tabular-nums">
-                {entry.amount.toLocaleString("sv-SE", {
+                {entry.amount.toLocaleString(currentLocale(), {
                   minimumFractionDigits: 2,
                 })}{" "}
                 {currency}
@@ -383,9 +386,9 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             </div>
           ))}
           <div className="flex justify-between border-t border-border pt-1 font-semibold">
-            <span>Total</span>
+            <span>{t("form.total")}</span>
             <span className="tabular-nums">
-              {totals.total.toLocaleString("sv-SE", {
+              {totals.total.toLocaleString(currentLocale(), {
                 minimumFractionDigits: 2,
               })}{" "}
               {currency}
@@ -396,12 +399,12 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
 
       {/* Notes */}
       <div>
-        <label className="mb-1 block text-sm font-medium">Notes</label>
+        <label className="mb-1 block text-sm font-medium">{t("form.notes")}</label>
         <textarea
           className={INPUT_CLASS + " min-h-[60px] resize-y"}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Additional notes for the quote..."
+          placeholder={t("form.notesPlaceholder")}
         />
       </div>
 
@@ -419,7 +422,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
       {/* Language toggle + Actions */}
       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">PDF Language:</label>
+          <label className="text-sm font-medium">{t("form.pdfLanguage")}</label>
           <button
             type="button"
             onClick={() => setLanguage("sv")}
@@ -429,7 +432,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
-            Svenska
+            {t("form.languageSv")}
           </button>
           <button
             type="button"
@@ -440,7 +443,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
-            English
+            {t("form.languageEn")}
           </button>
         </div>
 
@@ -451,7 +454,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             disabled={!customerId || saving}
             className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
           >
-            {saving ? "Saving..." : "Save as Draft"}
+            {saving ? t("form.saving") : t("form.saveDraft")}
           </button>
           {existingQuote && (
             <button
@@ -460,7 +463,7 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
               disabled={!customerId || saving}
               className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Save Quote"}
+              {saving ? t("form.saving") : t("form.saveQuote")}
             </button>
           )}
           <button
@@ -470,17 +473,17 @@ export function QuoteForm({ existingQuote, onSaved }: QuoteFormProps) {
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {saving
-              ? "Saving..."
+              ? t("form.saving")
               : existingQuote
-              ? "Update & Download PDF"
-              : "Create & Download PDF"}
+              ? t("form.updatePdf")
+              : t("form.createPdf")}
           </button>
         </div>
       </div>
 
       {!profile && (
         <p className="text-sm text-amber-600">
-          Set up your profile first to include your business details on the PDF.
+          {t("form.noProfile")}
         </p>
       )}
     </div>

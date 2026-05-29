@@ -1,0 +1,96 @@
+{
+  "page": {
+    "title": "Offerter",
+    "description": "Skapa och hantera offerter",
+    "newQuote": "Ny offert",
+    "close": "Stäng",
+    "loading": "Laddar offerter..."
+  },
+  "detail": {
+    "title": "Offert",
+    "titleWithNumber": "Offert {{number}}",
+    "description": "Redigera offertinformation",
+    "loading": "Laddar...",
+    "notFound": "Offerten hittades inte.",
+    "back": "Tillbaka till offerter",
+    "markSent": "Markera som skickad",
+    "marking": "Uppdaterar..."
+  },
+  "status": {
+    "draft": "Utkast",
+    "created": "Skapad",
+    "sent": "Skickad",
+    "accepted": "Accepterad",
+    "rejected": "Avvisad"
+  },
+  "list": {
+    "empty": "Inga offerter ännu. Skapa din första offert ovan.",
+    "unknownCustomer": "Okänd",
+    "columns": {
+      "quoteNumber": "Offertnr",
+      "customer": "Kund",
+      "total": "Totalt",
+      "status": "Status",
+      "validUntil": "Giltig till",
+      "created": "Skapad"
+    },
+    "edit": "Redigera",
+    "convert": "Konvertera",
+    "delete": "Radera",
+    "deleteTitle": "Radera offert {{number}}?",
+    "deleteDescription": "Den här åtgärden kan inte ångras. Offerten raderas permanent."
+  },
+  "form": {
+    "customer": "Kund",
+    "selectCustomer": "Välj kund...",
+    "addCustomer": "Lägg till ny kund",
+    "validUntil": "Giltig till",
+    "columns": {
+      "description": "Beskrivning",
+      "qty": "Antal",
+      "unitPrice": "Á-pris",
+      "vat": "Moms",
+      "billing": "Betalning",
+      "total": "Totalt",
+      "vatAmt": "Momsbelopp"
+    },
+    "addLine": "Lägg till rad",
+    "addText": "Lägg till text",
+    "subtotal": "Nettosumma",
+    "vatRate": "Moms {{rate}}%",
+    "total": "Totalt",
+    "notes": "Anteckningar",
+    "notesPlaceholder": "Ytterligare anteckningar för offerten...",
+    "pdfLanguage": "PDF-språk:",
+    "languageSv": "Svenska",
+    "languageEn": "English",
+    "saveDraft": "Spara som utkast",
+    "saving": "Sparar...",
+    "saveQuote": "Spara offert",
+    "createPdf": "Skapa & ladda ner PDF",
+    "updatePdf": "Uppdatera & ladda ner PDF",
+    "noProfile": "Ställ in din profil först för att inkludera dina företagsuppgifter i PDF:en."
+  },
+  "lineItem": {
+    "textPlaceholder": "Text / kommentar...",
+    "descriptionPlaceholder": "Artikelbeskrivning",
+    "billing": {
+      "oneTime": "Engång",
+      "weekly": "Veckovis",
+      "monthly": "Månadsvis",
+      "halfYear": "Halvår"
+    }
+  },
+  "profitability": {
+    "title": "Lönsamhet (intern)",
+    "estimatedHours": "Uppskattade timmar",
+    "costs": "Kostnader",
+    "costLabelPlaceholder": "Kostnadsbeteckning (t.ex. Hosting)",
+    "addCost": "Lägg till kostnad",
+    "totalCosts": "Totala kostnader",
+    "revenue": "Intäkt",
+    "profit": "Vinst",
+    "perHour": "Per timme",
+    "mrr": "MRR"
+  }
+}

@@ -1,7 +1,10 @@
 import type { Customer, VatRateType } from "@crm/shared";
+import i18n from "@/i18n";
 import type { InvoiceLineData } from "./calculations";
 import { calcInvoiceTotals } from "./calculations";
 import type { InvoiceFormData } from "../hooks/use-invoices";
+
+const t = () => i18n.getFixedT(null, "invoices");
 
 export interface ParsedImportInvoice {
   invoiceDate: string;
@@ -69,7 +72,7 @@ export function parseCsvInvoices(
   if (lines.length < 2) {
     return {
       invoices: [],
-      errors: ["CSV must have a header row and at least one data row."],
+      errors: [t()("import.errors.missingHeader")],
       warnings: [],
     };
   }
@@ -79,7 +82,7 @@ export function parseCsvInvoices(
   const required = ["invoicedate", "duedate", "customername", "description"];
   for (const req of required) {
     if (!headers.includes(req)) {
-      errors.push(`Missing required column: "${req}"`);
+      errors.push(t()("import.errors.missingColumn", { column: req }));
     }
   }
   if (errors.length > 0) return { invoices: [], errors, warnings };
@@ -101,29 +104,29 @@ export function parseCsvInvoices(
 
     // Validate required
     if (!row["invoicedate"]) {
-      errors.push(`Row ${rowNum}: Missing invoiceDate`);
+      errors.push(t()("import.errors.rowMissingInvoiceDate", { row: rowNum }));
       continue;
     }
     if (!row["duedate"]) {
-      errors.push(`Row ${rowNum}: Missing dueDate`);
+      errors.push(t()("import.errors.rowMissingDueDate", { row: rowNum }));
       continue;
     }
     if (!row["customername"]) {
-      errors.push(`Row ${rowNum}: Missing customerName`);
+      errors.push(t()("import.errors.rowMissingCustomerName", { row: rowNum }));
       continue;
     }
     if (!row["description"]) {
-      errors.push(`Row ${rowNum}: Missing description`);
+      errors.push(t()("import.errors.rowMissingDescription", { row: rowNum }));
       continue;
     }
 
     // Validate date format
     if (!/^\d{4}-\d{2}-\d{2}$/.test(row["invoicedate"])) {
-      errors.push(`Row ${rowNum}: invoiceDate must be YYYY-MM-DD`);
+      errors.push(t()("import.errors.rowInvalidInvoiceDate", { row: rowNum }));
       continue;
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(row["duedate"])) {
-      errors.push(`Row ${rowNum}: dueDate must be YYYY-MM-DD`);
+      errors.push(t()("import.errors.rowInvalidDueDate", { row: rowNum }));
       continue;
     }
 
@@ -134,7 +137,7 @@ export function parseCsvInvoices(
     );
     if (!matchedCustomer) {
       warnings.push(
-        `Row ${rowNum}: Customer "${customerName}" not found — will be left unmatched.`
+        t()("import.warnings.customerNotFound", { row: rowNum, customer: customerName })
       );
     }
 
@@ -150,7 +153,7 @@ export function parseCsvInvoices(
       : "25";
     if (!VALID_VAT_RATES.includes(rawVat)) {
       warnings.push(
-        `Row ${rowNum}: Invalid vatRate "${rawVat}", defaulting to 25%`
+        t()("import.warnings.invalidVatRate", { row: rowNum, rate: rawVat })
       );
     }
 

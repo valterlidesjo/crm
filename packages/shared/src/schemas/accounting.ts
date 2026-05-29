@@ -42,12 +42,21 @@ export const JournalEntry = Schema.Struct({
   vatRate: VatRate,
   vatAmount: Schema.Number,
   lines: Schema.Array(JournalEntryLine),
-  /** Origin of this entry. Undefined = manually created. Supersedes the planned importSource field. */
+  /** Origin of this entry. Undefined = legacy/manually created. */
   source: Schema.optional(
-    Schema.Union(Schema.Literal("manual"), Schema.Literal("shopify"), Schema.Literal("import"))
+    Schema.Union(
+      Schema.Literal("manual"),
+      Schema.Literal("import"),
+      Schema.Literal("invoice"),
+      Schema.Literal("purchase-order"),
+      Schema.Literal("shopify")
+    )
   ),
   createdAt: Schema.String,
   updatedAt: Schema.String,
 });
 
 export type JournalEntry = typeof JournalEntry.Type;
+
+/** Origin of a journal entry. `undefined` on legacy entries is treated as "manual". */
+export type JournalEntrySource = NonNullable<JournalEntry["source"]>;

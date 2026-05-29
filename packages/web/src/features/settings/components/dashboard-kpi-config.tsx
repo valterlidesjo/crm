@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { usePartner } from "@/lib/partner";
@@ -9,7 +10,12 @@ import {
   type KpiId,
 } from "@/features/dashboard/utils/kpi-catalog";
 
+// KPI ids are snake_case stable identifiers; dashboard i18n keys are lowerCamelCase.
+const kpiI18nKey = (id: KpiId): string =>
+  id.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+
 export function DashboardKpiConfig() {
+  const { t } = useTranslation(["settings", "dashboard", "common"]);
   const { partnerId, dashboardKpis } = usePartner();
 
   // Initialise from current partner config once it loads
@@ -57,7 +63,7 @@ export function DashboardKpiConfig() {
       setSaved(true);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Kunde inte spara inställningar"
+        err instanceof Error ? err.message : t("kpiConfig.saveError")
       );
     } finally {
       setSaving(false);
@@ -67,15 +73,16 @@ export function DashboardKpiConfig() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Dashboard KPIer</h2>
+        <h2 className="text-lg font-semibold">{t("kpiConfig.heading")}</h2>
         <p className="text-sm text-muted-foreground">
-          Välj vilka KPIer som visas på dashboard för den här partnern.
+          {t("kpiConfig.description")}
         </p>
       </div>
 
       <div className="rounded-lg border border-border divide-y divide-border">
         {KPI_IDS.map((id) => {
           const meta = KPI_CATALOG[id];
+          const i18nKey = kpiI18nKey(id);
           const isEnabled = enabled.has(id);
           return (
             <label
@@ -89,11 +96,13 @@ export function DashboardKpiConfig() {
                 className="mt-0.5 h-4 w-4 rounded border-border accent-primary"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium leading-none">{meta.label}</p>
+                <p className="text-sm font-medium leading-none">
+                  {t(`dashboard:kpi.${i18nKey}.label`)}
+                </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {meta.description}
+                  {t(`dashboard:kpi.${i18nKey}.description`)}
                   {meta.timeSensitive && (
-                    <span className="ml-1 text-xs text-primary/70">· påverkas av tidsfilter</span>
+                    <span className="ml-1 text-xs text-primary/70">{t("kpiConfig.timeSensitive")}</span>
                   )}
                 </p>
               </div>
@@ -112,10 +121,10 @@ export function DashboardKpiConfig() {
           disabled={saving}
           className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
-          {saving ? "Sparar..." : "Spara"}
+          {saving ? t("kpiConfig.saving") : t("common:actions.save")}
         </button>
         {saved && (
-          <p className="text-sm text-muted-foreground">Sparat!</p>
+          <p className="text-sm text-muted-foreground">{t("kpiConfig.saved")}</p>
         )}
       </div>
     </div>

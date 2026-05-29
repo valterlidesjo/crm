@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Eye, Trash2 } from "lucide-react";
 import { PartnerFeaturesTab } from "./partner-features-tab";
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function PartnerCard({ partner, onUpdateName, onUpdateFeatures, onDelete }: Props) {
+  const { t } = useTranslation(["partners", "common"]);
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("members");
   const [editingName, setEditingName] = useState(false);
@@ -88,14 +90,14 @@ export function PartnerCard({ partner, onUpdateName, onUpdateFeatures, onDelete 
               disabled={savingName}
               className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {savingName ? "Saving..." : "Save"}
+              {savingName ? t("card.saving") : t("common:actions.save")}
             </button>
             <button
               type="button"
               onClick={() => { setEditingName(false); setNameValue(partner.name); }}
               className="rounded-md border border-input px-3 py-1 text-xs hover:bg-muted"
             >
-              Cancel
+              {t("common:actions.cancel")}
             </button>
           </form>
         ) : (
@@ -111,7 +113,7 @@ export function PartnerCard({ partner, onUpdateName, onUpdateFeatures, onDelete 
 
         <button
           onClick={handleEmulate}
-          title="Emulate this partner"
+          title={t("card.emulateTitle")}
           className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <Eye className="h-3.5 w-3.5" />
@@ -123,13 +125,13 @@ export function PartnerCard({ partner, onUpdateName, onUpdateFeatures, onDelete 
               onClick={() => onDelete(partner.id)}
               className="rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
-              Delete
+              {t("common:actions.delete")}
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
               className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
             >
-              Cancel
+              {t("common:actions.cancel")}
             </button>
           </div>
         ) : (
@@ -158,7 +160,7 @@ export function PartnerCard({ partner, onUpdateName, onUpdateFeatures, onDelete 
                     : "text-muted-foreground hover:text-foreground",
                 ].join(" ")}
               >
-                {tab}
+                {t(`tabs.${tab}`)}
               </button>
             ))}
           </div>

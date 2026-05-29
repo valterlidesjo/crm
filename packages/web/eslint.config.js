@@ -19,5 +19,12 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // This project intentionally co-locates context providers with their
+      // hooks (useAuth, usePartner, …) and field components with small helpers.
+      // The rule only affects Vite Fast Refresh DX, not correctness, so we opt
+      // out of it rather than fragmenting those modules.
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

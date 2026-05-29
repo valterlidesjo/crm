@@ -1,5 +1,7 @@
+import { currentLocale } from "@/i18n";
+
 export function formatCurrency(amount: number, currency = "SEK"): string {
-  return new Intl.NumberFormat("sv-SE", {
+  return new Intl.NumberFormat(currentLocale(), {
     style: "currency",
     currency,
     minimumFractionDigits: 0,
@@ -8,7 +10,7 @@ export function formatCurrency(amount: number, currency = "SEK"): string {
 }
 
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("sv-SE", {
+  return new Date(dateString).toLocaleDateString(currentLocale(), {
     year: "numeric",
     month: "long",
     day: "numeric",

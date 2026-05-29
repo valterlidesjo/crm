@@ -1,0 +1,60 @@
+{
+  "title": "Dashboard",
+  "description": "Overview of your activity",
+  "period": {
+    "last30Days": "30 days",
+    "last90Days": "3 mo",
+    "last365Days": "12 mo",
+    "allTime": "All time"
+  },
+  "kpi": {
+    "shopifyRevenue": {
+      "label": "Shopify revenue",
+      "description": "Revenue from Shopify orders during the selected period"
+    },
+    "shopifyOrders": {
+      "label": "Shopify orders",
+      "description": "Number of Shopify orders during the selected period"
+    },
+    "inventoryRetailValue": {
+      "label": "Inventory value (price)",
+      "description": "Current inventory value: stock quantity × sales price"
+    },
+    "inventoryCostValue": {
+      "label": "Inventory value (cost)",
+      "description": "Current inventory value: stock quantity × purchase price"
+    },
+    "inventoryUnits": {
+      "label": "Inventory units",
+      "description": "Total number of units in stock right now"
+    },
+    "totalIncome": {
+      "label": "Total income",
+      "description": "Total income during the selected period"
+    },
+    "activeCustomers": {
+      "label": "Active customers",
+      "description": "Customers with status active or in progress"
+    },
+    "mrr": {
+      "label": "MRR",
+      "description": "Monthly Recurring Revenue"
+    },
+    "meetingsThisWeek": {
+      "label": "Meetings this week",
+      "description": "Number of meetings booked this week"
+    }
+  },
+  "goals": {
+    "loading": "Loading goals...",
+    "heading": "Goals",
+    "empty": "No goals set. Go to <0>Profile</0> to set your income and MRR goals.",
+    "incomeGoal": "Total Income Goal",
+    "mrrGoal": "MRR Goal",
+    "deadline": "Deadline: ",
+    "daysRemaining": "Days remaining: ",
+    "daysOverdue_one": "{{count}} day overdue",
+    "daysOverdue_other": "{{count}} days overdue",
+    "achieveHeading": "How to achieve current goal?"
+  }
+}

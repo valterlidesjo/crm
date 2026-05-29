@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/page-container";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/invoicing/")({
 });
 
 function InvoicingPage() {
+  const { t } = useTranslation("invoices");
   const { invoices, loading, deleteInvoice } = useInvoices();
   const { customers } = useCustomers();
   const [showForm, setShowForm] = useState(false);
@@ -23,7 +25,7 @@ function InvoicingPage() {
   const [showExport, setShowExport] = useState(false);
 
   return (
-    <PageContainer title="Invoicing" description="Create and manage invoices">
+    <PageContainer title={t("page.title")} description={t("page.description")}>
       <div className="space-y-6">
         {/* Action bar */}
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -32,7 +34,7 @@ function InvoicingPage() {
             onClick={() => setShowImport(true)}
             className="flex items-center gap-1.5 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
           >
-            <Upload className="h-4 w-4" /> Import CSV
+            <Upload className="h-4 w-4" /> {t("page.importCsv")}
           </button>
 
           <button
@@ -41,7 +43,7 @@ function InvoicingPage() {
             disabled={invoices.length === 0}
             className="flex items-center gap-1.5 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
           >
-            <Download className="h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4" /> {t("page.exportCsv")}
           </button>
 
           <button
@@ -51,11 +53,11 @@ function InvoicingPage() {
           >
             {showForm ? (
               <>
-                <X className="h-4 w-4" /> Close
+                <X className="h-4 w-4" /> {t("page.close")}
               </>
             ) : (
               <>
-                <Plus className="h-4 w-4" /> New invoice
+                <Plus className="h-4 w-4" /> {t("page.newInvoice")}
               </>
             )}
           </button>
@@ -63,13 +65,13 @@ function InvoicingPage() {
 
         {showForm && (
           <div className="rounded-lg border border-border bg-background p-6">
-            <h2 className="mb-4 text-lg font-semibold">New invoice</h2>
+            <h2 className="mb-4 text-lg font-semibold">{t("detail.newInvoice")}</h2>
             <InvoiceForm onSaved={() => setShowForm(false)} />
           </div>
         )}
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading invoices...</p>
+          <p className="text-sm text-muted-foreground">{t("page.loading")}</p>
         ) : (
           <InvoiceList invoices={invoices} customers={customers} onDelete={deleteInvoice} />
         )}

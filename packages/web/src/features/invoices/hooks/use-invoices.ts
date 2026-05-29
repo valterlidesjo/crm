@@ -188,7 +188,12 @@ export function useInvoices() {
 
     const entryData = buildInvoiceJournalEntry(invoice, paidDate);
     const entryRef = doc(partnerCol(partnerId, "journalEntries"));
-    batch.set(entryRef, { ...entryData, createdAt: now, updatedAt: now });
+    batch.set(entryRef, {
+      ...entryData,
+      source: "invoice",
+      createdAt: now,
+      updatedAt: now,
+    });
 
     await batch.commit();
   }, [partnerId]);

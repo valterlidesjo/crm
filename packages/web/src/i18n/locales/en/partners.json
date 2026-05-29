@@ -1,0 +1,71 @@
+{
+  "page": {
+    "title": "Partners",
+    "description": "Manage partners, their users, and feature access.",
+    "newPartner": "New partner",
+    "loading": "Loading partners...",
+    "empty": "No partners yet. Create one to get started."
+  },
+  "role": {
+    "admin": "Administrator",
+    "user": "User"
+  },
+  "feature": {
+    "dashboard": "Dashboard",
+    "customers": "Customers",
+    "pipeline": "Pipeline",
+    "meetings": "Meetings",
+    "invoicing": "Invoicing",
+    "quotes": "Quotes",
+    "accounting": "Accounting",
+    "inventory": "Inventory",
+    "orders": "Orders",
+    "purchaseOrders": "Purchase Orders",
+    "settings": "Settings",
+    "profile": "Profile"
+  },
+  "tabs": {
+    "members": "Members",
+    "features": "Features"
+  },
+  "card": {
+    "saving": "Saving...",
+    "emulateTitle": "Emulate this partner"
+  },
+  "members": {
+    "loading": "Loading members...",
+    "empty": "No members yet.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "user@example.com",
+    "roleLabel": "Role",
+    "adding": "Adding...",
+    "addMember": "Add member"
+  },
+  "create": {
+    "titleStep1": "New Partner",
+    "titleStep2": "Review & confirm",
+    "stepIndicator": "Step {{step}} of 2",
+    "fromScratch": "From scratch",
+    "fromCustomer": "From customer",
+    "searchCustomers": "Search customers...",
+    "loadingCustomers": "Loading...",
+    "noCustomers": "No customers found.",
+    "selected": "Selected",
+    "next": "Next",
+    "partnerName": "Partner name",
+    "partnerNamePlaceholder": "Acme AB",
+    "partnerIdPreview": "Partner ID:",
+    "contactPerson": "Contact person",
+    "willBeAddedPrefix": "Will be added to",
+    "willBeAddedSuffix": "and the partner's members list.",
+    "creating": "Creating...",
+    "createPartner": "Create partner"
+  },
+  "shopify": {
+    "title": "Shopify",
+    "description": "Configure and sync Shopify per partner",
+    "loading": "Loading partners...",
+    "empty": "No partners found.",
+    "manage": "Manage"
+  }
+}

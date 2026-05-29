@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import type { Quote, Customer } from "@crm/shared";
-import { QUOTE_STATUS_LABELS } from "@crm/shared";
+import { currentLocale } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { FileText, Pencil, Trash2 } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
@@ -22,6 +23,7 @@ interface QuoteListProps {
 }
 
 export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListProps) {
+  const { t } = useTranslation("quotes");
   const navigate = useNavigate();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -29,14 +31,14 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
     () => new Map(customers.map((c) => [c.id, c.name])),
     [customers]
   );
-  const customerName = (id: string) => customerMap.get(id) ?? "Unknown";
+  const customerName = (id: string) => customerMap.get(id) ?? t("list.unknownCustomer");
 
   const deleteTarget = quotes.find((q) => q.id === deleteTargetId);
 
   if (quotes.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No quotes yet. Create your first quote above.
+        {t("list.empty")}
       </p>
     );
   }
@@ -47,12 +49,12 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Quote #</th>
-              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Customer</th>
-              <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">Total</th>
-              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Status</th>
-              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Valid Until</th>
-              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Created</th>
+              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.quoteNumber")}</th>
+              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.customer")}</th>
+              <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">{t("list.columns.total")}</th>
+              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.status")}</th>
+              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.validUntil")}</th>
+              <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.created")}</th>
               <th className="py-2.5 px-4" />
             </tr>
           </thead>
@@ -68,7 +70,7 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
                 <td className="py-2.5 px-4 font-medium">{q.quoteNumber}</td>
                 <td className="py-2.5 px-4">{customerName(q.customerId)}</td>
                 <td className="py-2.5 px-4 text-right tabular-nums">
-                  {q.totalAmount.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}{" "}
+                  {q.totalAmount.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}{" "}
                   {q.currency}
                 </td>
                 <td className="py-2.5 px-4">
@@ -78,7 +80,7 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
                       STATUS_COLORS[q.status] ?? STATUS_COLORS.draft
                     )}
                   >
-                    {QUOTE_STATUS_LABELS[q.status]}
+                    {t(`status.${q.status}`)}
                   </span>
                 </td>
                 <td className="py-2.5 px-4 text-muted-foreground">{q.validUntil}</td>
@@ -95,7 +97,7 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
                       className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      Edit
+                      {t("list.edit")}
                     </button>
                     <button
                       type="button"
@@ -103,7 +105,7 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
                       className="flex items-center gap-1.5 rounded-md border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
                     >
                       <FileText className="h-3.5 w-3.5" />
-                      Convert
+                      {t("list.convert")}
                     </button>
                     <button
                       type="button"
@@ -111,7 +113,7 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
                       className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      {t("list.delete")}
                     </button>
                   </div>
                 </td>
@@ -124,8 +126,8 @@ export function QuoteList({ quotes, customers, onDelete, onConvert }: QuoteListP
       <DeleteConfirmDialog
         open={deleteTargetId !== null}
         onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}
-        title={`Delete quote ${deleteTarget?.quoteNumber ?? ""}?`}
-        description="This action cannot be undone. The quote will be permanently deleted."
+        title={t("list.deleteTitle", { number: deleteTarget?.quoteNumber ?? "" })}
+        description={t("list.deleteDescription")}
         onConfirm={() => onDelete(deleteTargetId!)}
       />
     </>

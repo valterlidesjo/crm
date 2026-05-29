@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import { useTranslation } from "react-i18next";
 import type { Customer } from "@crm/shared";
 import type { PipelineStage } from "../utils/pipeline-stages";
 import { PipelineCard } from "./pipeline-card";
@@ -10,6 +11,7 @@ interface PipelineColumnProps {
 }
 
 export function PipelineColumn({ stage, customers }: PipelineColumnProps) {
+  const { t } = useTranslation("pipeline");
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   return (
@@ -17,7 +19,7 @@ export function PipelineColumn({ stage, customers }: PipelineColumnProps) {
       {/* Column header */}
       <div className="mb-3 flex items-center gap-2">
         <div className={cn("h-3 w-3 rounded-full", stage.color)} />
-        <h3 className="text-sm font-semibold text-foreground">{stage.label}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{t(`stage.${stage.id}`)}</h3>
         <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
           {customers.length}
         </span>
@@ -34,7 +36,7 @@ export function PipelineColumn({ stage, customers }: PipelineColumnProps) {
       >
         {customers.length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">
-            No customers
+            {t("board.noCustomers")}
           </p>
         ) : (
           customers.map((customer) => (

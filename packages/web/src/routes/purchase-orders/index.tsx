@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { PageContainer } from "@/components/layout/page-container";
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/purchase-orders/")({
 });
 
 function PurchaseOrdersPage() {
+  const { t } = useTranslation("purchaseOrders");
   const { products } = useProducts();
   const { purchaseOrders, loading, addPurchaseOrder, cancelPurchaseOrder, receivePurchaseOrder } =
     usePurchaseOrders();
@@ -25,8 +27,8 @@ function PurchaseOrdersPage() {
 
   return (
     <PageContainer
-      title="Purchase Orders"
-      description="Record supplier purchases and update inventory on arrival"
+      title={t("page.title")}
+      description={t("page.description")}
     >
       <div className="space-y-6">
         {/* Action bar */}
@@ -37,14 +39,14 @@ function PurchaseOrdersPage() {
             className="flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            New purchase order
+            {t("page.newOrder")}
           </button>
         </div>
 
         {/* List */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">
-            Loading...
+            {t("page.loading")}
           </div>
         ) : (
           <PurchaseOrderList

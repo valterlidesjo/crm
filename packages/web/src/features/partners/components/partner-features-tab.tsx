@@ -1,4 +1,5 @@
-import { FEATURE_KEYS, FEATURE_LABELS, type FeatureKey } from "@crm/shared";
+import { useTranslation } from "react-i18next";
+import { FEATURE_KEYS, type FeatureKey } from "@crm/shared";
 
 interface Props {
   features: Record<FeatureKey, boolean>;
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function PartnerFeaturesTab({ features, onChange, saving }: Props) {
+  const { t } = useTranslation("partners");
   const toggle = (key: FeatureKey) => {
     onChange({ ...features, [key]: !features[key] });
   };
@@ -18,7 +20,7 @@ export function PartnerFeaturesTab({ features, onChange, saving }: Props) {
           key={key}
           className="flex items-center justify-between rounded-md px-3 py-2.5 hover:bg-muted/50"
         >
-          <span className="text-sm font-medium">{FEATURE_LABELS[key]}</span>
+          <span className="text-sm font-medium">{t(`feature.${key}`)}</span>
           <button
             type="button"
             role="switch"

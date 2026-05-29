@@ -1,0 +1,16 @@
+{
+  "dashboard": "Dashboard",
+  "customers": "Customers",
+  "pipeline": "Pipeline",
+  "meetings": "Meetings",
+  "invoicing": "Invoicing",
+  "quotes": "Quotes",
+  "accounting": "Accounting",
+  "inventory": "Inventory",
+  "orders": "Orders",
+  "purchaseOrders": "Purchase Orders",
+  "profile": "Profile",
+  "settings": "Settings",
+  "partners": "Partners",
+  "shopify": "Shopify"
+}

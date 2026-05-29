@@ -31,6 +31,7 @@ export type {
   AccountCategory as AccountCategoryType,
   JournalEntryLine as JournalEntryLineType,
   JournalEntry as JournalEntryType,
+  JournalEntrySource,
 } from "./accounting";
 
 export { CompanyProfile } from "./profile";
@@ -42,10 +43,21 @@ export type { AllowedEmail as AllowedEmailType } from "./allowed-email";
 export { Partner, PartnerMember } from "./partner";
 export type { Partner as PartnerType, PartnerMember as PartnerMemberType } from "./partner";
 
-export { Product, ProductVariant, ShopifyIntegrationConfig } from "./product";
+export { Product, ShopifyIntegrationConfig } from "./product";
+
+export { ShopifyOrder, ShopifyOrderLineItem, ShopifyOrderStatus, ChannelOrder, OrderSource } from "./shopify-order";
+export type {
+  ShopifyOrder as ShopifyOrderType,
+  ShopifyOrderLineItem as ShopifyOrderLineItemType,
+  ShopifyOrderStatus as ShopifyOrderStatusType,
+  ChannelOrder as ChannelOrderType,
+  OrderSource as OrderSourceType,
+} from "./shopify-order";
+
+export { CdonIntegrationConfig } from "./cdon-integration";
+export type { CdonIntegrationConfig as CdonIntegrationConfigType } from "./cdon-integration";
 export type {
   Product as ProductType,
-  ProductVariant as ProductVariantType,
   ShopifyIntegrationConfig as ShopifyIntegrationConfigType,
 } from "./product";
 

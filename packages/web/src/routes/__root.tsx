@@ -1,16 +1,18 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
+import { useTranslation } from "react-i18next";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useAuth, signIn, signOut, type AuthState } from "@/lib/auth";
 
 function ErrorFallback({ error }: FallbackProps) {
-  const message = error instanceof Error ? error.message : "Unknown error";
+  const { t } = useTranslation("auth");
+  const message = error instanceof Error ? error.message : t("error.unknown");
   return (
     <div className="flex flex-col items-center justify-center h-screen gap-4">
-      <h2 className="text-lg font-semibold">Något gick fel</h2>
+      <h2 className="text-lg font-semibold">{t("error.title")}</h2>
       <p className="text-sm text-muted-foreground">{message}</p>
       <button onClick={() => window.location.reload()} className="text-sm underline">
-        Ladda om sidan
+        {t("error.reload")}
       </button>
     </div>
   );
@@ -29,11 +31,12 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const authState = useAuth();
+  const { t } = useTranslation("auth");
 
   if (authState.status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t("loading")}</p>
       </div>
     );
   }
@@ -53,22 +56,23 @@ function RootLayout() {
 }
 
 function LoginScreen({ denied }: { denied: string | null }) {
+  const { t } = useTranslation(["auth", "common"]);
   return (
     <div className="flex h-screen items-center justify-center bg-muted">
       <div className="w-full max-w-sm">
         {/* Logo + brand */}
         <div className="mb-6 flex flex-col items-center">
-          <img src="/logo.png" alt="VersatileCRM" className="mb-4 h-20 w-auto object-contain" />
-          <h1 className="text-2xl font-semibold text-foreground">VersatileCRM</h1>
+          <img src="/logo.png" alt={t("common:brand")} className="mb-4 h-20 w-auto object-contain" />
+          <h1 className="text-2xl font-semibold text-foreground">{t("common:brand")}</h1>
           <p className="mt-1 text-sm text-muted-foreground text-center">
-            E-commerce operations — inventory, accounting &amp; sales in one place.
+            {t("auth:login.tagline")}
           </p>
         </div>
 
         <div className="rounded-lg border border-border bg-background p-8 shadow-sm">
           {denied && (
             <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              Access denied for {denied}. Contact an admin to get access.
+              {t("auth:login.accessDenied", { email: denied })}
             </div>
           )}
 
@@ -77,7 +81,7 @@ function LoginScreen({ denied }: { denied: string | null }) {
             className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <GoogleIcon />
-            Sign in with Google
+            {t("auth:login.signInGoogle")}
           </button>
 
           {denied && (
@@ -85,15 +89,15 @@ function LoginScreen({ denied }: { denied: string | null }) {
               onClick={() => signOut()}
               className="mt-3 w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              Try a different account
+              {t("auth:login.tryDifferent")}
             </button>
           )}
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Don't have an account?{" "}
+          {t("auth:login.noAccount")}{" "}
           <a href="mailto:hello@versatilecrm.com" className="underline hover:text-foreground transition-colors">
-            Contact us
+            {t("auth:login.contactUs")}
           </a>
         </p>
       </div>

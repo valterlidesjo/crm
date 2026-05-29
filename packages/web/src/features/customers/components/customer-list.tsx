@@ -1,4 +1,4 @@
-import { CUSTOMER_STATUS_LABELS } from "@crm/shared";
+import { useTranslation } from "react-i18next";
 import type { CustomerStatusType } from "@crm/shared";
 import type { Customer } from "@crm/shared";
 import { Pencil, Building2, User } from "lucide-react";
@@ -21,15 +21,17 @@ const STATUS_COLORS: Record<CustomerStatusType, string> = {
 };
 
 export function CustomerList({ customers, loading, onEdit }: CustomerListProps) {
+  const { t } = useTranslation("customers");
+
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading customers...</p>;
+    return <p className="text-sm text-muted-foreground">{t("list.loading")}</p>;
   }
 
   if (customers.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground">No customers yet.</p>
-        <p className="text-sm text-muted-foreground">Click "Add Customer" to get started.</p>
+        <p className="text-muted-foreground">{t("list.emptyTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("list.emptyHint")}</p>
       </div>
     );
   }
@@ -39,13 +41,13 @@ export function CustomerList({ customers, loading, onEdit }: CustomerListProps) 
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/50">
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Location</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Phone</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Category</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-            <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.name")}</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.location")}</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.email")}</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.phone")}</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.category")}</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">{t("list.headers.status")}</th>
+            <th className="px-4 py-3 text-right font-medium text-muted-foreground">{t("list.headers.actions")}</th>
           </tr>
         </thead>
         <tbody>
@@ -74,17 +76,17 @@ export function CustomerList({ customers, loading, onEdit }: CustomerListProps) 
                     STATUS_COLORS[customer.status]
                   )}
                 >
-                  {CUSTOMER_STATUS_LABELS[customer.status]}
+                  {t(`status.${customer.status}`)}
                 </span>
               </td>
               <td className="px-4 py-3 text-right">
                 <button
                   onClick={() => onEdit(customer)}
                   className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                  title="Edit customer"
+                  title={t("list.editTooltip")}
                 >
                   <Pencil className="h-3.5 w-3.5" />
-                  Edit
+                  {t("list.edit")}
                 </button>
               </td>
             </tr>

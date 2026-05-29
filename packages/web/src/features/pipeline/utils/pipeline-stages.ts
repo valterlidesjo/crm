@@ -2,7 +2,6 @@ import type { CustomerStatusType } from "@crm/shared";
 
 export interface PipelineStage {
   id: string;
-  label: string;
   statuses: CustomerStatusType[];
   color: string;
   bgColor: string;
@@ -12,7 +11,6 @@ export interface PipelineStage {
 export const PIPELINE_STAGES: PipelineStage[] = [
   {
     id: "prospecting",
-    label: "Prospecting",
     statuses: ["not_contacted"],
     color: "bg-gray-500",
     bgColor: "bg-gray-50",
@@ -20,7 +18,6 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: "contacted",
-    label: "Contacted",
     statuses: ["contacted", "warm"],
     color: "bg-blue-500",
     bgColor: "bg-blue-50",
@@ -28,7 +25,6 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: "in_progress",
-    label: "In Progress",
     statuses: ["in_progress"],
     color: "bg-yellow-500",
     bgColor: "bg-yellow-50",
@@ -36,7 +32,6 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   },
   {
     id: "deal_closed",
-    label: "Deal Closed",
     statuses: ["mrr", "completed"],
     color: "bg-green-500",
     bgColor: "bg-green-50",
@@ -46,7 +41,6 @@ export const PIPELINE_STAGES: PipelineStage[] = [
 
 export const LOST_STAGE: PipelineStage = {
   id: "lost",
-  label: "Lost",
   statuses: ["lost"],
   color: "bg-red-500",
   bgColor: "bg-red-50",

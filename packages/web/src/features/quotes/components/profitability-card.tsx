@@ -1,4 +1,6 @@
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { currentLocale } from "@/i18n";
 import { calcProfitability, type CostEntry } from "../utils/calculations";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ export function ProfitabilityCard({
   onEstimatedHoursChange,
   onCostsChange,
 }: ProfitabilityCardProps) {
+  const { t } = useTranslation("quotes");
   const result = calcProfitability(subtotal, estimatedHours, costs);
   const isPositive = result.profit >= 0;
 
@@ -44,12 +47,12 @@ export function ProfitabilityCard({
   return (
     <div className="rounded-lg border border-border bg-background p-4 space-y-4">
       <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-        Profitability (internal)
+        {t("profitability.title")}
       </h3>
 
       <div>
         <label className="mb-1 block text-xs font-medium text-muted-foreground">
-          Estimated hours
+          {t("profitability.estimatedHours")}
         </label>
         <input
           className={INPUT_CLASS + " max-w-[200px]"}
@@ -67,7 +70,7 @@ export function ProfitabilityCard({
       {/* Costs list */}
       <div className="space-y-2">
         <label className="block text-xs font-medium text-muted-foreground">
-          Costs
+          {t("profitability.costs")}
         </label>
         {costs.map((cost, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -75,7 +78,7 @@ export function ProfitabilityCard({
               className={INPUT_CLASS}
               value={cost.label}
               onChange={(e) => updateCost(i, "label", e.target.value)}
-              placeholder="Cost label (e.g. Hosting)"
+              placeholder={t("profitability.costLabelPlaceholder")}
             />
             <input
               className={INPUT_CLASS + " w-32 shrink-0"}
@@ -103,45 +106,45 @@ export function ProfitabilityCard({
           className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
         >
           <Plus className="h-4 w-4" />
-          Add cost
+          {t("profitability.addCost")}
         </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 pt-2 border-t border-border">
         <div>
-          <p className="text-xs text-muted-foreground">Total Costs</p>
+          <p className="text-xs text-muted-foreground">{t("profitability.totalCosts")}</p>
           <p className="text-sm font-medium tabular-nums">
-            {result.totalCost.toLocaleString("sv-SE", {
+            {result.totalCost.toLocaleString(currentLocale(), {
               minimumFractionDigits: 2,
             })}{" "}
             {currency}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Revenue</p>
+          <p className="text-xs text-muted-foreground">{t("profitability.revenue")}</p>
           <p className="text-sm font-medium tabular-nums">
-            {result.revenue.toLocaleString("sv-SE", {
+            {result.revenue.toLocaleString(currentLocale(), {
               minimumFractionDigits: 2,
             })}{" "}
             {currency}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Profit</p>
+          <p className="text-xs text-muted-foreground">{t("profitability.profit")}</p>
           <p
             className={cn(
               "text-sm font-semibold tabular-nums",
               isPositive ? "text-green-600" : "text-red-600"
             )}
           >
-            {result.profit.toLocaleString("sv-SE", {
+            {result.profit.toLocaleString(currentLocale(), {
               minimumFractionDigits: 2,
             })}{" "}
             {currency}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Per Hour</p>
+          <p className="text-xs text-muted-foreground">{t("profitability.perHour")}</p>
           <p
             className={cn(
               "text-sm font-semibold tabular-nums",
@@ -149,14 +152,14 @@ export function ProfitabilityCard({
             )}
           >
             {estimatedHours > 0
-              ? `${result.perHour.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} ${currency}/h`
+              ? `${result.perHour.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })} ${currency}/h`
               : "-"}
           </p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">MRR</p>
+          <p className="text-xs text-muted-foreground">{t("profitability.mrr")}</p>
           <p className="text-sm font-semibold tabular-nums text-blue-600">
-            {mrr.toLocaleString("sv-SE", {
+            {mrr.toLocaleString(currentLocale(), {
               minimumFractionDigits: 2,
             })}{" "}
             {currency}

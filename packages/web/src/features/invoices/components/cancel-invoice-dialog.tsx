@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ export function CancelInvoiceDialog({
   invoiceNumber,
   onConfirm,
 }: CancelInvoiceDialogProps) {
+  const { t } = useTranslation("invoices");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,9 +49,9 @@ export function CancelInvoiceDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Cancel invoice {invoiceNumber}</DialogTitle>
+          <DialogTitle>{t("cancelDialog.title", { number: invoiceNumber })}</DialogTitle>
           <DialogDescription>
-            Provide a reason for cancelling this invoice. This cannot be undone.
+            {t("cancelDialog.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -59,13 +61,13 @@ export function CancelInvoiceDialog({
               htmlFor="cancel-reason"
               className="text-sm font-medium text-foreground"
             >
-              Reason <span className="text-red-500">*</span>
+              {t("cancelDialog.reasonLabel")} <span className="text-red-500">*</span>
             </label>
             <textarea
               id="cancel-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Describe why the invoice is being cancelled..."
+              placeholder={t("cancelDialog.reasonPlaceholder")}
               rows={4}
               disabled={submitting}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 resize-none"
@@ -79,14 +81,14 @@ export function CancelInvoiceDialog({
               disabled={submitting}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
             >
-              Cancel
+              {t("cancelDialog.cancel")}
             </button>
             <button
               type="submit"
               disabled={!reason.trim() || submitting}
               className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
             >
-              {submitting ? "Cancelling..." : "Cancel invoice"}
+              {submitting ? t("cancelDialog.cancelling") : t("cancelDialog.confirm")}
             </button>
           </div>
         </form>

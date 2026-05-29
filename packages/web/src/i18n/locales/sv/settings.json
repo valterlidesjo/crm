@@ -1,0 +1,43 @@
+{
+  "page": {
+    "title": "Inställningar",
+    "description": "Hantera användare och systeminställningar"
+  },
+  "users": {
+    "heading": "Behöriga användare",
+    "subheading": "Hantera vilka som kan komma åt CRM:et",
+    "addUser": "Lägg till användare",
+    "loading": "Laddar användare...",
+    "empty": "Inga användare hittades",
+    "confirmRemove": "Är du säker på att du vill ta bort den här användaren?",
+    "table": {
+      "email": "E-post",
+      "role": "Roll",
+      "addedBy": "Tillagd av",
+      "actions": "Åtgärder"
+    },
+    "remove": "Ta bort",
+    "removing": "Tar bort..."
+  },
+  "role": {
+    "admin": "Administratör",
+    "user": "Användare"
+  },
+  "addEmail": {
+    "title": "Lägg till ny användare",
+    "emailLabel": "E-post",
+    "emailPlaceholder": "anvandare@exempel.com",
+    "roleLabel": "Roll",
+    "roleHint": "Användare har åtkomst till allt utom Bokföring, Fakturering och Inställningar",
+    "submit": "Lägg till användare",
+    "submitting": "Lägger till..."
+  },
+  "kpiConfig": {
+    "heading": "Dashboard-KPI:er",
+    "description": "Välj vilka KPI:er som visas på dashboarden för den här partnern.",
+    "timeSensitive": "· påverkas av tidsfilter",
+    "saveError": "Kunde inte spara inställningar",
+    "saving": "Sparar...",
+    "saved": "Sparat!"
+  }
+}

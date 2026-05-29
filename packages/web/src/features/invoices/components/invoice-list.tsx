@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "@tanstack/react-router";
 import type { Invoice, Customer } from "@crm/shared";
-import { INVOICE_STATUS_LABELS } from "@crm/shared";
 import { cn } from "@/lib/utils";
+import { currentLocale } from "@/i18n";
 import { ChevronRight, ChevronDown, Trash2, Pencil } from "lucide-react";
 import { DeleteConfirmDialog } from "@/components/ui/delete-confirm-dialog";
 
@@ -22,6 +23,7 @@ interface InvoiceListProps {
 }
 
 export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps) {
+  const { t } = useTranslation("invoices");
   const navigate = useNavigate();
   const [cancelledExpanded, setCancelledExpanded] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -33,7 +35,8 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
     () => new Map(customers.map((c) => [c.id, c.name])),
     [customers]
   );
-  const customerName = (id: string) => customerMap.get(id) ?? "Unknown";
+  const customerName = (id: string) =>
+    customerMap.get(id) ?? t("list.unknownCustomer");
 
   function navigateToInvoice(id: string) {
     navigate({ to: "/invoicing/$invoiceId", params: { invoiceId: id } });
@@ -43,13 +46,13 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
 
   const tableHeader = (
     <tr className="border-b border-border bg-muted/30">
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Invoice #</th>
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Reference</th>
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Customer</th>
-      <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">Total</th>
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Status</th>
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Due Date</th>
-      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Created</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.invoiceNumber")}</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.reference")}</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.customer")}</th>
+      <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">{t("list.columns.total")}</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.status")}</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.dueDate")}</th>
+      <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.created")}</th>
       <th className="py-2.5 px-4" />
     </tr>
   );
@@ -57,7 +60,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
   if (invoices.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No invoices yet. Create your first invoice above.
+        {t("list.empty")}
       </p>
     );
   }
@@ -65,7 +68,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
   return (
     <div className="space-y-4">
       {active.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">No active invoices.</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("list.noActive")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
@@ -81,7 +84,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                   <td className="py-2.5 px-4 font-mono text-xs">{inv.invoiceRef}</td>
                   <td className="py-2.5 px-4">{customerName(inv.customerId)}</td>
                   <td className="py-2.5 px-4 text-right tabular-nums">
-                    {inv.totalAmount.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}{" "}
+                    {inv.totalAmount.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}{" "}
                     {inv.currency}
                   </td>
                   <td className="py-2.5 px-4">
@@ -91,7 +94,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                         STATUS_COLORS[inv.status] ?? STATUS_COLORS.draft
                       )}
                     >
-                      {INVOICE_STATUS_LABELS[inv.status]}
+                      {t(`status.${inv.status}`)}
                     </span>
                   </td>
                   <td className="py-2.5 px-4 text-muted-foreground">{inv.dueDate}</td>
@@ -106,7 +109,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                         className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
                       >
                         <Pencil className="h-3.5 w-3.5" />
-                        Edit
+                        {t("list.edit")}
                       </button>
                       <button
                         type="button"
@@ -114,7 +117,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                         className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        Delete
+                        {t("list.delete")}
                       </button>
                     </div>
                   </td>
@@ -138,7 +141,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
               <ChevronRight className="h-4 w-4" />
             )}
             <span className="h-2.5 w-2.5 rounded-full bg-gray-400" />
-            Cancelled ({cancelled.length})
+            {t("list.cancelledGroup", { count: cancelled.length })}
           </button>
 
           {cancelledExpanded && (
@@ -146,12 +149,12 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Invoice #</th>
-                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Reference</th>
-                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Customer</th>
-                    <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">Total</th>
-                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Reason</th>
-                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">Cancelled</th>
+                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.invoiceNumber")}</th>
+                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.reference")}</th>
+                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.customer")}</th>
+                    <th className="py-2.5 px-4 text-right font-medium text-muted-foreground">{t("list.columns.total")}</th>
+                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.reason")}</th>
+                    <th className="py-2.5 px-4 text-left font-medium text-muted-foreground">{t("list.columns.cancelled")}</th>
                     <th className="py-2.5 px-4" />
                   </tr>
                 </thead>
@@ -167,7 +170,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                       <td className="py-2.5 px-4 font-mono text-xs">{inv.invoiceRef}</td>
                       <td className="py-2.5 px-4">{customerName(inv.customerId)}</td>
                       <td className="py-2.5 px-4 text-right tabular-nums text-muted-foreground">
-                        {inv.totalAmount.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}{" "}
+                        {inv.totalAmount.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}{" "}
                         {inv.currency}
                       </td>
                       <td className="py-2.5 px-4 text-muted-foreground max-w-xs truncate">
@@ -183,7 +186,7 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
                           className="flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          {t("list.delete")}
                         </button>
                       </td>
                     </tr>
@@ -198,8 +201,8 @@ export function InvoiceList({ invoices, customers, onDelete }: InvoiceListProps)
       <DeleteConfirmDialog
         open={deleteTargetId !== null}
         onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}
-        title={`Delete invoice ${deleteTarget?.invoiceNumber ?? ""}?`}
-        description="This action cannot be undone. The invoice will be permanently deleted."
+        title={t("list.deleteTitle", { number: deleteTarget?.invoiceNumber ?? "" })}
+        description={t("list.deleteDescription")}
         onConfirm={() => onDelete(deleteTargetId!)}
       />
     </div>

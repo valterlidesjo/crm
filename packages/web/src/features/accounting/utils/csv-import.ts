@@ -1,6 +1,9 @@
 import { ACCOUNT_CATEGORIES } from "@crm/shared";
 import { buildJournalEntry } from "./journal-entry-builder";
+import i18n from "@/i18n";
 import type { JournalEntry, VatRate } from "@crm/shared";
+
+const t = () => i18n.getFixedT(null, "accounting");
 
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
@@ -27,10 +30,11 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
-export interface ParsedImportEntry
-  extends Omit<JournalEntry, "id" | "createdAt" | "updatedAt"> {
-  // same fields, just used for preview
-}
+/** A parsed entry ready for preview/import (no persisted metadata yet). */
+export type ParsedImportEntry = Omit<
+  JournalEntry,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 export interface ImportEntriesResult {
   entries: ParsedImportEntry[];
@@ -39,6 +43,41 @@ export interface ImportEntriesResult {
 }
 
 const VALID_VAT_RATES = new Set<string>(["0", "6", "12", "25"]);
+
+/**
+ * Parses an amount typed by a user / exported from Excel, tolerating the
+ * common Swedish and English variations:
+ *   "1250.00"      → 1250
+ *   "1 250,50"     → 1250.5   (space thousands, comma decimal)
+ *   "1 250,50 kr"  → 1250.5
+ *   "1,250.00"     → 1250     (comma thousands, dot decimal)
+ *   "1.250.000"    → 1250000  (dot thousands)
+ */
+export function parseFlexibleAmount(raw: string): number {
+  let s = raw
+    .trim()
+    .replace(/\s*kr\s*$/i, "") // strip currency suffix
+    .replace(/\s/g, ""); // strip thousands spaces
+
+  const hasComma = s.includes(",");
+  const hasDot = s.includes(".");
+
+  if (hasComma && hasDot) {
+    // Whichever separator appears last is the decimal one.
+    if (s.lastIndexOf(",") > s.lastIndexOf(".")) {
+      s = s.replace(/\./g, "").replace(",", "."); // comma decimal
+    } else {
+      s = s.replace(/,/g, ""); // dot decimal, comma thousands
+    }
+  } else if (hasComma) {
+    // Single comma → decimal; multiple → thousands separators.
+    s = (s.match(/,/g) ?? []).length > 1 ? s.replace(/,/g, "") : s.replace(",", ".");
+  } else if (hasDot && (s.match(/\./g) ?? []).length > 1) {
+    s = s.replace(/\./g, ""); // multiple dots → thousands separators
+  }
+
+  return parseFloat(s);
+}
 
 export function parseEntriesCsv(csvText: string): ImportEntriesResult {
   const errors: string[] = [];
@@ -52,7 +91,7 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
     .filter((l) => l.length > 0);
 
   if (lines.length < 2) {
-    errors.push("CSV-filen verkar vara tom eller saknar datarader.");
+    errors.push(t()("import.errors.emptyInternal"));
     return { entries, errors, warnings };
   }
 
@@ -76,7 +115,7 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
   if (amtIdx === -1) missing.push("totalAmount");
 
   if (missing.length > 0) {
-    errors.push(`Obligatoriska kolumner saknas: ${missing.join(", ")}`);
+    errors.push(t()("import.errors.missingColumns", { columns: missing.join(", ") }));
     return { entries, errors, warnings };
   }
 
@@ -94,7 +133,7 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
     // Validate date
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       errors.push(
-        `Rad ${rowNum}: Ogiltigt datum "${date}". Förväntar YYYY-MM-DD.`
+        t()("import.errors.invalidDate", { row: rowNum, date })
       );
       continue;
     }
@@ -102,7 +141,10 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
     // Validate transactionType
     if (transactionType !== "cost" && transactionType !== "income") {
       errors.push(
-        `Rad ${rowNum}: Ogiltigt transaktionstyp "${transactionType}". Måste vara "cost" eller "income".`
+        t()("import.errors.invalidTransactionType", {
+          row: rowNum,
+          type: transactionType,
+        })
       );
       continue;
     }
@@ -111,23 +153,28 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
     const category = ACCOUNT_CATEGORIES.find((c) => c.id === categoryId);
     if (!category) {
       errors.push(
-        `Rad ${rowNum}: Okänd kategori "${categoryId}". Se listan med tillgängliga kategorier i dialogen.`
+        t()("import.errors.unknownCategory", { row: rowNum, category: categoryId })
       );
       continue;
     }
 
     if (category.transactionType !== transactionType) {
       errors.push(
-        `Rad ${rowNum}: Kategori "${categoryId}" är en ${category.transactionType === "cost" ? "kostnad" : "inkomst"}-kategori men transactionType är "${transactionType}".`
+        t()("import.errors.categoryTypeMismatch", {
+          row: rowNum,
+          category: categoryId,
+          categoryType: category.transactionType,
+          type: transactionType,
+        })
       );
       continue;
     }
 
     // Validate amount
-    const totalAmount = parseFloat(totalAmountStr.replace(",", "."));
+    const totalAmount = parseFlexibleAmount(totalAmountStr);
     if (isNaN(totalAmount) || totalAmount <= 0) {
       errors.push(
-        `Rad ${rowNum}: Ogiltigt belopp "${totalAmountStr}". Måste vara ett positivt tal.`
+        t()("import.errors.invalidAmount", { row: rowNum, amount: totalAmountStr })
       );
       continue;
     }
@@ -139,7 +186,11 @@ export function parseEntriesCsv(csvText: string): ImportEntriesResult {
         vatRate = vatRateStr as VatRate;
       } else {
         warnings.push(
-          `Rad ${rowNum}: Ogiltigt momssats "${vatRateStr}", använder kategorins standard (${category.defaultVatRate}%).`
+          t()("import.warnings.invalidVatRate", {
+            row: rowNum,
+            rate: vatRateStr,
+            defaultRate: category.defaultVatRate,
+          })
         );
       }
     }
@@ -341,7 +392,7 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
     .filter((l) => l.length > 0);
 
   if (lines.length < 2) {
-    errors.push("CSV-filen är tom eller saknar datarader.");
+    errors.push(t()("import.errors.emptyVerifikation"));
     return { entries, errors, warnings };
   }
 
@@ -368,7 +419,7 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
   if (kreditIdx === -1) missing.push("Kredit");
 
   if (missing.length > 0) {
-    errors.push(`Obligatoriska kolumner saknas: ${missing.join(", ")}`);
+    errors.push(t()("import.errors.missingColumns", { columns: missing.join(", ") }));
     return { entries, errors, warnings };
   }
 
@@ -406,12 +457,12 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
     const kreditStr = row[kreditIdx] ?? "";
 
     if (!rawVerif) {
-      warnings.push(`Rad ${rowNum}: Verifikationsnummer saknas, hoppas över.`);
+      warnings.push(t()("import.warnings.missingVerifNumber", { row: rowNum }));
       continue;
     }
 
     if (!accountNumber) {
-      warnings.push(`Rad ${rowNum}: Kontonummer saknas, hoppas över.`);
+      warnings.push(t()("import.warnings.missingAccountNumber", { row: rowNum }));
       continue;
     }
 
@@ -419,7 +470,7 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
     if (rawDatum) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(rawDatum)) {
         errors.push(
-          `Rad ${rowNum}: Ogiltigt datum "${rawDatum}". Förväntar YYYY-MM-DD.`
+          t()("import.errors.invalidDate", { row: rowNum, date: rawDatum })
         );
         continue;
       }
@@ -430,7 +481,7 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
     // First row of a new verif must have a date
     if (!groups.has(rawVerif) && !rawDatum && !currentDatum) {
       errors.push(
-        `Rad ${rowNum}: Verifikation ${rawVerif} saknar datum på första raden.`
+        t()("import.errors.noDateFirstRow", { row: rowNum, verifId: rawVerif })
       );
       continue;
     }
@@ -461,7 +512,7 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
     if (group.rawLines.length === 0) continue;
 
     if (!group.datum) {
-      errors.push(`Verifikation ${verifId}: Datum saknas.`);
+      errors.push(t()("import.errors.missingDate", { verifId }));
       continue;
     }
 
@@ -514,9 +565,11 @@ export function parseVerifikationCsv(csvText: string): ImportEntriesResult {
 
     if (BALANCE_SHEET_CATEGORY_IDS.has(category.id)) {
       warnings.push(
-        `Verifikation ${verifId} (${group.ref || group.datum}): ` +
-          `Klassificerad som "${category.name}" (balansräkningskonto). ` +
-          `Ingår i kassaflödet men inte i resultatet.`
+        t()("import.warnings.balanceSheetCategory", {
+          verifId,
+          ref: group.ref || group.datum,
+          name: category.name,
+        })
       );
     }
 

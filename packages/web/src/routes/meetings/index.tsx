@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/layout/page-container";
 import { MeetingList } from "@/features/meetings/components/meeting-list";
 import { AddMeetingDialog } from "@/features/meetings/components/add-meeting-dialog";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/meetings/")({
 });
 
 function MeetingsPage() {
+  const { t } = useTranslation("meetings");
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editMeeting, setEditMeeting] = useState<Meeting | null>(null);
 
@@ -77,8 +79,8 @@ function MeetingsPage() {
 
   return (
     <PageContainer
-      title="Meetings"
-      description="Schedule and track meetings with Google Calendar integration"
+      title={t("page.title")}
+      description={t("page.description")}
     >
       {/* Google Calendar Authorization Banner */}
       {!authLoading && !isAuthorized && (
@@ -87,11 +89,10 @@ function MeetingsPage() {
             <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
             <div className="flex-1">
               <p className="font-medium text-blue-900">
-                Connect Google Calendar
+                {t("connectBanner.title")}
               </p>
               <p className="mt-0.5 text-sm text-blue-700">
-                Enable two-way sync with your Google Calendar for automatic
-                event creation and updates.
+                {t("connectBanner.description")}
               </p>
             </div>
           </div>
@@ -99,7 +100,7 @@ function MeetingsPage() {
             onClick={handleAuthorize}
             className="ml-4 flex-shrink-0 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
           >
-            Connect Calendar
+            {t("connectBanner.button")}
           </button>
         </div>
       )}
@@ -110,7 +111,7 @@ function MeetingsPage() {
           <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
           <div className="flex-1">
             <p className="text-sm font-medium text-red-900">
-              Authorization failed
+              {t("errorBanner.title")}
             </p>
             <p className="mt-0.5 text-sm text-red-700">{authError}</p>
           </div>
@@ -131,7 +132,7 @@ function MeetingsPage() {
             className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            Schedule Meeting
+            {t("actions.schedule")}
           </button>
 
           {isAuthorized && (
@@ -143,14 +144,14 @@ function MeetingsPage() {
               <RefreshCw
                 className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`}
               />
-              {syncing ? "Syncing..." : "Sync Calendar"}
+              {syncing ? t("actions.syncing") : t("actions.sync")}
             </button>
           )}
         </div>
 
         {/* Meeting count */}
         <div className="text-sm text-muted-foreground">
-          {meetings.length} meeting{meetings.length !== 1 ? "s" : ""}
+          {t("count", { count: meetings.length })}
         </div>
       </div>
 

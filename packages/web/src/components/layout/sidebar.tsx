@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   Users,
@@ -21,29 +22,32 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage, type Language } from "@/i18n";
 import { useUserRole, useIsSuperAdmin, signOut } from "@/lib/auth";
 import { usePartner } from "@/lib/partner";
 import type { FeatureKey, UserRole } from "@crm/shared";
 
 const STORAGE_KEY = "crm-sidebar-collapsed";
 
+// `key` indexes the "nav" i18n namespace; it is also the stable React key.
 const navigation: {
-  name: string;
+  key: string;
   href: string;
   icon: React.ElementType;
   roles: UserRole[];
   feature: FeatureKey;
 }[] = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "user"], feature: "dashboard" },
-  { name: "Customers", href: "/customers", icon: Users, roles: ["admin", "user"], feature: "customers" },
-  { name: "Pipeline", href: "/pipeline", icon: Kanban, roles: ["admin", "user"], feature: "pipeline" },
-  { name: "Meetings", href: "/meetings", icon: Calendar, roles: ["admin", "user"], feature: "meetings" },
-  { name: "Invoicing", href: "/invoicing", icon: Receipt, roles: ["admin"], feature: "invoicing" },
-  { name: "Quotes", href: "/quotes", icon: FileText, roles: ["admin", "user"], feature: "quotes" },
-  { name: "Accounting", href: "/accounting", icon: Calculator, roles: ["admin"], feature: "accounting" },
-  { name: "Inventory", href: "/inventory", icon: Package, roles: ["admin", "user"], feature: "inventory" },
-  { name: "Purchase Orders", href: "/purchase-orders", icon: ShoppingCart, roles: ["admin"], feature: "purchaseOrders" },
-  { name: "Profile", href: "/profile", icon: UserCog, roles: ["admin", "user"], feature: "profile" },
+  { key: "dashboard", href: "/", icon: LayoutDashboard, roles: ["admin", "user"], feature: "dashboard" },
+  { key: "customers", href: "/customers", icon: Users, roles: ["admin", "user"], feature: "customers" },
+  { key: "pipeline", href: "/pipeline", icon: Kanban, roles: ["admin", "user"], feature: "pipeline" },
+  { key: "meetings", href: "/meetings", icon: Calendar, roles: ["admin", "user"], feature: "meetings" },
+  { key: "invoicing", href: "/invoicing", icon: Receipt, roles: ["admin"], feature: "invoicing" },
+  { key: "quotes", href: "/quotes", icon: FileText, roles: ["admin", "user"], feature: "quotes" },
+  { key: "accounting", href: "/accounting", icon: Calculator, roles: ["admin"], feature: "accounting" },
+  { key: "inventory", href: "/inventory", icon: Package, roles: ["admin", "user"], feature: "inventory" },
+  { key: "orders", href: "/orders", icon: ShoppingBag, roles: ["admin", "user"], feature: "orders" },
+  { key: "purchaseOrders", href: "/purchase-orders", icon: ShoppingCart, roles: ["admin"], feature: "purchaseOrders" },
+  { key: "profile", href: "/profile", icon: UserCog, roles: ["admin", "user"], feature: "profile" },
 ];
 
 /*
@@ -60,6 +64,8 @@ const navigation: {
  *   - SuperAdmin nav section (Partners, Settings, Shopify) is hidden
  */
 export function Sidebar() {
+  const { t } = useTranslation(["nav", "common"]);
+  const { language, setLanguage, languages } = useLanguage();
   const [collapsed, setCollapsed] = useState(
     () => localStorage.getItem(STORAGE_KEY) === "true"
   );
@@ -120,7 +126,7 @@ export function Sidebar() {
           {collapsed ? (
             <button
               onClick={handleExitEmulation}
-              title={`Exit emulation: ${emulatedPartnerName ?? "Unknown partner"}`}
+              title={`${t("common:emulation.exit")}: ${emulatedPartnerName ?? t("common:emulation.unknownPartner")}`}
               className="rounded p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
             >
               <Eye className="h-4 w-4 shrink-0" />
@@ -129,11 +135,11 @@ export function Sidebar() {
             <>
               <Eye className="h-4 w-4 shrink-0 text-blue-600" />
               <span className="flex-1 truncate text-xs font-semibold text-blue-700 dark:text-blue-400">
-                {emulatedPartnerName ?? "Unknown partner"}
+                {emulatedPartnerName ?? t("common:emulation.unknownPartner")}
               </span>
               <button
                 onClick={handleExitEmulation}
-                title="Exit emulation"
+                title={t("common:emulation.exit")}
                 className="rounded p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
               >
                 <X className="h-4 w-4" />
@@ -144,11 +150,11 @@ export function Sidebar() {
       ) : (
         <div className="flex h-14 items-center border-b border-sidebar-border px-3">
           {!collapsed && (
-            <h1 className="flex-1 text-lg font-semibold text-sidebar-foreground">VersatileCRM</h1>
+            <h1 className="flex-1 text-lg font-semibold text-sidebar-foreground">{t("common:brand")}</h1>
           )}
           <button
             onClick={toggle}
-            title={collapsed ? "Open menu" : "Close menu"}
+            title={collapsed ? t("common:actions.openMenu") : t("common:actions.closeMenu")}
             className={cn(
               "rounded-md p-1 text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
               collapsed && "w-full flex justify-center"
@@ -170,27 +176,28 @@ export function Sidebar() {
               ? currentPath === "/"
               : currentPath.startsWith(item.href);
           const featureOff = isEmulating && !isReallyEnabled(item.feature);
+          const label = t(`nav:${item.key}`);
           return (
             <Link
-              key={item.name}
+              key={item.key}
               to={item.href}
               title={
                 collapsed
                   ? featureOff
-                    ? `${item.name} (feature disabled)`
-                    : item.name
+                    ? t("common:emulation.featureDisabledShort", { name: label })
+                    : label
                   : featureOff
-                    ? `${item.name} — feature disabled for this partner`
+                    ? t("common:emulation.featureDisabledLong", { name: label })
                     : undefined
               }
               className={navLinkClass(isActive, featureOff)}
             >
               <item.icon className="h-4 w-4 shrink-0" />
               {!collapsed && (
-                <span className="flex-1">{item.name}</span>
+                <span className="flex-1">{label}</span>
               )}
               {!collapsed && featureOff && (
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" title="Feature disabled" />
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" title={t("common:emulation.featureDisabled")} />
               )}
             </Link>
           );
@@ -202,27 +209,27 @@ export function Sidebar() {
             <div className="my-2 border-t border-sidebar-border" />
             <Link
               to="/settings"
-              title={collapsed ? "Settings" : undefined}
+              title={collapsed ? t("nav:settings") : undefined}
               className={navLinkClass(currentPath.startsWith("/settings"))}
             >
               <Settings className="h-4 w-4 shrink-0" />
-              {!collapsed && "Settings"}
+              {!collapsed && t("nav:settings")}
             </Link>
             <Link
               to="/partners"
-              title={collapsed ? "Partners" : undefined}
+              title={collapsed ? t("nav:partners") : undefined}
               className={navLinkClass(currentPath.startsWith("/partners"))}
             >
               <Building2 className="h-4 w-4 shrink-0" />
-              {!collapsed && "Partners"}
+              {!collapsed && t("nav:partners")}
             </Link>
             <Link
               to="/superadmin/shopify"
-              title={collapsed ? "Shopify" : undefined}
+              title={collapsed ? t("nav:shopify") : undefined}
               className={navLinkClass(currentPath.startsWith("/superadmin/shopify"))}
             >
               <ShoppingBag className="h-4 w-4 shrink-0" />
-              {!collapsed && "Shopify"}
+              {!collapsed && t("nav:shopify")}
             </Link>
           </>
         )}
@@ -236,24 +243,51 @@ export function Sidebar() {
             className="mb-3 flex w-full items-center justify-center gap-2 rounded-md border border-blue-300 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-400 transition-colors"
           >
             <X className="h-3.5 w-3.5" />
-            Exit emulation
+            {t("common:emulation.exit")}
           </button>
         )}
         {!collapsed && !isEmulating && (
           <div className="mb-3 flex justify-center">
-            <img src="/logo.png" alt="VersatileCRM" className="h-32 w-full object-contain" />
+            <img src="/logo.png" alt={t("common:brand")} className="h-32 w-full object-contain" />
           </div>
+        )}
+        {/* Language switcher */}
+        {!collapsed ? (
+          <div className="mb-2 flex items-center gap-1 rounded-md border border-sidebar-border p-0.5">
+            {languages.map((lng: Language) => (
+              <button
+                key={lng}
+                onClick={() => setLanguage(lng)}
+                className={cn(
+                  "flex-1 rounded px-2 py-1 text-xs font-medium uppercase transition-colors",
+                  language === lng
+                    ? "bg-sidebar-accent text-sidebar-foreground"
+                    : "text-muted-foreground hover:text-sidebar-foreground"
+                )}
+              >
+                {lng}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <button
+            onClick={() => setLanguage(language === "sv" ? "en" : "sv")}
+            title={t("common:language.label")}
+            className="mb-2 flex w-full justify-center rounded-md py-1 text-xs font-medium uppercase text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          >
+            {language}
+          </button>
         )}
         <button
           onClick={() => signOut()}
-          title={collapsed ? "Logga ut" : undefined}
+          title={collapsed ? t("common:actions.logout") : undefined}
           className={cn(
             "flex w-full items-center rounded-md py-2 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors",
             collapsed ? "justify-center" : "gap-3 px-3"
           )}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && "Logout"}
+          {!collapsed && t("common:actions.logout")}
         </button>
       </div>
     </aside>

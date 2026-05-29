@@ -9,11 +9,11 @@ import type { ProductSuggestion } from "../utils/build-product-suggestions";
 
 interface ProductSuggestionsResult {
   suggestions: ProductSuggestion[];
-  decrementVariantStock: (productId: string, variantId: string, quantity: number) => Promise<number | undefined>;
+  decrementStock: (productId: string, quantity: number) => Promise<number | undefined>;
 }
 
 export function useProductSuggestions(): ProductSuggestionsResult {
-  const { products, decrementVariantStock } = useProducts();
+  const { products, decrementStock } = useProducts();
   const suggestions = useMemo(() => buildProductSuggestions(products), [products]);
-  return { suggestions, decrementVariantStock };
+  return { suggestions, decrementStock };
 }

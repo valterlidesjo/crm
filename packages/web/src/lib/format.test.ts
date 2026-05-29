@@ -1,5 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
+import i18n from "@/i18n/config";
 import { formatCurrency, formatDate, getDaysRemaining } from "./format";
+
+// These tests assert Swedish-locale output (kr, Swedish month names).
+beforeAll(async () => {
+  await i18n.changeLanguage("sv");
+});
 
 describe("formatCurrency", () => {
   it("should format SEK currency correctly", () => {

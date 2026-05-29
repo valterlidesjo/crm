@@ -47,23 +47,23 @@ const makeJournalEntry = (
   updatedAt: "2025-01-01T00:00:00.000Z",
 });
 
-const makeProduct = (
-  variants: Array<{ stock: number; price?: number; costPrice?: number }>,
+// Each article is a flat product document. Tests pass one or more articles
+// (previously expressed as variants) — they are now independent products.
+let articleCounter = 0;
+const makeArticles = (
+  articles: Array<{ stock: number; price?: number; costPrice?: number }>,
   status: "active" | "archived" = "active"
-): Product => ({
-  id: "p1",
-  title: "Test Product",
-  status,
-  variants: variants.map((v, i) => ({
-    id: `v${i}`,
-    title: `Variant ${i}`,
-    stock: v.stock,
-    ...(v.price !== undefined && { price: v.price }),
-    ...(v.costPrice !== undefined && { costPrice: v.costPrice }),
-  })),
-  createdAt: "2025-01-01T00:00:00.000Z",
-  updatedAt: "2025-01-01T00:00:00.000Z",
-});
+): Product[] =>
+  articles.map((a) => ({
+    id: `p${articleCounter++}`,
+    title: "Test Article",
+    status,
+    stock: a.stock,
+    ...(a.price !== undefined && { price: a.price }),
+    ...(a.costPrice !== undefined && { costPrice: a.costPrice }),
+    createdAt: "2025-01-01T00:00:00.000Z",
+    updatedAt: "2025-01-01T00:00:00.000Z",
+  }));
 
 const makeMeeting = (startTime: string): Meeting => ({
   id: "m1",
@@ -237,22 +237,17 @@ describe("calculateShopifyOrderCount", () => {
 
 describe("calculateInventoryRetailValue", () => {
   it("sums stock × price across all active variants", () => {
-    const products = [
-      makeProduct([{ stock: 10, price: 500 }, { stock: 5, price: 300 }]),
-    ];
+    const products = makeArticles([{ stock: 10, price: 500 }, { stock: 5, price: 300 }]);
     expect(calculateInventoryRetailValue(products)).toBe(6500);
   });
 
   it("treats missing price as 0", () => {
-    const products = [makeProduct([{ stock: 10 }])];
+    const products = makeArticles([{ stock: 10 }]);
     expect(calculateInventoryRetailValue(products)).toBe(0);
   });
 
   it("excludes archived products", () => {
-    const products = [
-      makeProduct([{ stock: 10, price: 500 }], "active"),
-      makeProduct([{ stock: 5, price: 300 }], "archived"),
-    ];
+    const products = [...makeArticles([{ stock: 10, price: 500 }]), ...makeArticles([{ stock: 5, price: 300 }], "archived")];
     expect(calculateInventoryRetailValue(products)).toBe(5000);
   });
 
@@ -263,12 +258,12 @@ describe("calculateInventoryRetailValue", () => {
 
 describe("calculateInventoryCostValue", () => {
   it("sums stock × costPrice across active variants", () => {
-    const products = [makeProduct([{ stock: 10, costPrice: 200 }, { stock: 5, costPrice: 100 }])];
+    const products = makeArticles([{ stock: 10, costPrice: 200 }, { stock: 5, costPrice: 100 }]);
     expect(calculateInventoryCostValue(products)).toBe(2500);
   });
 
   it("treats missing costPrice as 0 (graceful fallback until TODO-D3 data exists)", () => {
-    const products = [makeProduct([{ stock: 10 }])];
+    const products = makeArticles([{ stock: 10 }]);
     expect(calculateInventoryCostValue(products)).toBe(0);
   });
 
@@ -279,18 +274,12 @@ describe("calculateInventoryCostValue", () => {
 
 describe("calculateInventoryUnitCount", () => {
   it("sums stock across all active variants", () => {
-    const products = [
-      makeProduct([{ stock: 10 }, { stock: 5 }]),
-      makeProduct([{ stock: 3 }]),
-    ];
+    const products = [...makeArticles([{ stock: 10 }, { stock: 5 }]), ...makeArticles([{ stock: 3 }])];
     expect(calculateInventoryUnitCount(products)).toBe(18);
   });
 
   it("excludes archived products", () => {
-    const products = [
-      makeProduct([{ stock: 10 }], "active"),
-      makeProduct([{ stock: 5 }], "archived"),
-    ];
+    const products = [...makeArticles([{ stock: 10 }]), ...makeArticles([{ stock: 5 }], "archived")];
     expect(calculateInventoryUnitCount(products)).toBe(10);
   });
 

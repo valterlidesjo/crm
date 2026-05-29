@@ -1,0 +1,81 @@
+{
+  "page": {
+    "title": "Meetings",
+    "description": "Schedule and track meetings with Google Calendar integration"
+  },
+  "connectBanner": {
+    "title": "Connect Google Calendar",
+    "description": "Enable two-way sync with your Google Calendar for automatic event creation and updates.",
+    "button": "Connect Calendar"
+  },
+  "errorBanner": {
+    "title": "Authorization failed"
+  },
+  "actions": {
+    "schedule": "Schedule Meeting",
+    "sync": "Sync Calendar",
+    "syncing": "Syncing..."
+  },
+  "count_one": "{{count}} meeting",
+  "count_other": "{{count}} meetings",
+  "list": {
+    "emptyTitle": "No meetings scheduled",
+    "emptyDescription": "Schedule a meeting to get started",
+    "today": "Today",
+    "allDay": "All day",
+    "attendees_one": "{{count}} attendee",
+    "attendees_other": "{{count}} attendees"
+  },
+  "add": {
+    "title": "Schedule Meeting",
+    "googleBadge": "Google Calendar",
+    "descriptionBase": "Create a new meeting",
+    "descriptionWithCalendar": "Create a new meeting - it will also be added to your Google Calendar.",
+    "submit": "Schedule Meeting",
+    "submitting": "Creating..."
+  },
+  "edit": {
+    "title": "Edit Meeting",
+    "syncedBadge": "Synced",
+    "descriptionBase": "Update meeting details",
+    "descriptionWithCalendar": "Update meeting details - changes will sync to Google Calendar.",
+    "viewInGoogle": "View in Google Calendar",
+    "submit": "Save Changes",
+    "submitting": "Saving...",
+    "deleteConfirm": "Delete this meeting?",
+    "deleteYes": "Yes, delete",
+    "deleting": "Deleting...",
+    "notifyChanges": "Notify attendees of changes"
+  },
+  "sections": {
+    "details": "Meeting Details",
+    "attendees": "Attendees",
+    "linkToCrm": "Link to CRM"
+  },
+  "fields": {
+    "title": "Title",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "location": "Location",
+    "allDay": "All day event",
+    "description": "Description",
+    "sendNotifications": "Send email invitations to attendees",
+    "customer": "Customer",
+    "internalNotes": "Internal Notes",
+    "outcome": "Outcome"
+  },
+  "placeholders": {
+    "title": "Meeting title",
+    "location": "Office, Zoom link, etc.",
+    "description": "Meeting agenda, notes...",
+    "selectCustomer": "Select customer...",
+    "internalNotes": "Internal notes (not shared with attendees)",
+    "outcome": "Meeting outcome, action items..."
+  },
+  "attendeeInput": {
+    "emailPlaceholder": "email@example.com",
+    "namePlaceholder": "Name (optional)",
+    "add": "Add attendee"
+  },
+  "untitled": "Untitled Meeting"
+}

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { X, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { MeetingFormData } from "../hooks/use-meetings";
 
 export const INPUT_CLASS =
@@ -32,6 +33,7 @@ interface AttendeeInputProps {
 }
 
 export function AttendeeInput({ attendees, onChange }: AttendeeInputProps) {
+  const { t } = useTranslation("meetings");
   const addAttendee = () => {
     onChange([...attendees, { email: "", name: "" }]);
   };
@@ -59,14 +61,14 @@ export function AttendeeInput({ attendees, onChange }: AttendeeInputProps) {
             value={attendee.email}
             onChange={(e) => updateAttendee(index, "email", e.target.value)}
             className={cn(INPUT_CLASS, "flex-1")}
-            placeholder="email@example.com"
+            placeholder={t("attendeeInput.emailPlaceholder")}
           />
           <input
             type="text"
             value={attendee.name || ""}
             onChange={(e) => updateAttendee(index, "name", e.target.value)}
             className={cn(INPUT_CLASS, "w-40")}
-            placeholder="Name (optional)"
+            placeholder={t("attendeeInput.namePlaceholder")}
           />
           <button
             type="button"
@@ -83,7 +85,7 @@ export function AttendeeInput({ attendees, onChange }: AttendeeInputProps) {
         className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
       >
         <Plus className="h-4 w-4" />
-        Add attendee
+        {t("attendeeInput.add")}
       </button>
     </div>
   );

@@ -91,14 +91,16 @@ describe("quoteToInvoiceFormData", () => {
   });
 
   it("defaults currency to SEK when missing", () => {
-    const { currency: _c, ...noC } = BASE_QUOTE as Record<string, unknown>;
+    const noC = { ...(BASE_QUOTE as Record<string, unknown>) };
+    delete noC.currency;
     // @ts-expect-error testing partial data
     const result = quoteToInvoiceFormData({ ...noC } as Quote, "REF1", FIXED_DATE);
     expect(result.currency).toBe("SEK");
   });
 
   it("defaults language to sv when missing", () => {
-    const { language: _l, ...noL } = BASE_QUOTE as Record<string, unknown>;
+    const noL = { ...(BASE_QUOTE as Record<string, unknown>) };
+    delete noL.language;
     // @ts-expect-error testing partial data
     const result = quoteToInvoiceFormData({ ...noL } as Quote, "REF1", FIXED_DATE);
     expect(result.language).toBe("sv");

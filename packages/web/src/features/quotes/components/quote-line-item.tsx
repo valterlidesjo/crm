@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Trash2, GripVertical } from "lucide-react";
 import { calcLineTotal, calcLineVat } from "../utils/calculations";
 import type { QuoteLineData } from "../utils/calculations";
 import type { VatRateType, BillingFrequency } from "@crm/shared";
 import type { ProductSuggestion } from "@/features/invoices/hooks/use-product-suggestions";
+import { currentLocale } from "@/i18n";
 
 const INPUT_CLASS =
   "w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors";
@@ -16,18 +18,19 @@ const VAT_OPTIONS: { value: VatRateType; label: string }[] = [
   { value: "0", label: "0%" },
 ];
 
-const BILLING_OPTIONS: { value: BillingFrequency; label: string }[] = [
-  { value: "one-time", label: "One-time" },
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "half-year", label: "Half-year" },
+// `labelKey` indexes the "quotes:lineItem.billing" i18n namespace.
+const BILLING_OPTIONS: { value: BillingFrequency; labelKey: string }[] = [
+  { value: "one-time", labelKey: "lineItem.billing.oneTime" },
+  { value: "weekly", labelKey: "lineItem.billing.weekly" },
+  { value: "monthly", labelKey: "lineItem.billing.monthly" },
+  { value: "half-year", labelKey: "lineItem.billing.halfYear" },
 ];
 
 interface QuoteLineItemProps {
   item: QuoteLineData;
   index: number;
   onChange: (index: number, field: keyof QuoteLineData, value: string | number) => void;
-  onSelectProduct: (index: number, data: Pick<QuoteLineData, "description" | "unitPrice" | "productId" | "variantId" | "sku">) => void;
+  onSelectProduct: (index: number, data: Pick<QuoteLineData, "description" | "unitPrice" | "productId" | "sku">) => void;
   onRemove: (index: number) => void;
   currency: string;
   suggestions: ProductSuggestion[];
@@ -52,6 +55,7 @@ export function QuoteLineItem({
   onDrop,
   onDragEnd,
 }: QuoteLineItemProps) {
+  const { t } = useTranslation("quotes");
   const isText = item.type === "text";
   const lineTotal = isText ? 0 : calcLineTotal(item.quantity, item.unitPrice);
   const lineVat = isText ? 0 : calcLineVat(item.quantity, item.unitPrice, item.vatRate);
@@ -103,7 +107,6 @@ export function QuoteLineItem({
       description: s.description,
       unitPrice: s.unitPrice,
       productId: s.productId,
-      variantId: s.variantId,
       sku: s.sku,
     });
     setOpen(false);
@@ -134,7 +137,7 @@ export function QuoteLineItem({
                   )}
                 </span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {s.unitPrice.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                  {s.unitPrice.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                 </span>
               </button>
             ))}
@@ -163,7 +166,7 @@ export function QuoteLineItem({
             className={INPUT_CLASS + " italic text-muted-foreground"}
             value={item.description}
             onChange={(e) => onChange(index, "description", e.target.value)}
-            placeholder="Text / comment..."
+            placeholder={t("lineItem.textPlaceholder")}
           />
         </td>
       ) : (
@@ -174,7 +177,7 @@ export function QuoteLineItem({
               className={INPUT_CLASS}
               value={item.description}
               onChange={(e) => onChange(index, "description", e.target.value)}
-              placeholder="Article description"
+              placeholder={t("lineItem.descriptionPlaceholder")}
               onFocus={() => setOpen(true)}
               onBlur={() => setTimeout(() => setOpen(false), 120)}
             />
@@ -225,16 +228,16 @@ export function QuoteLineItem({
             >
               {BILLING_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </select>
           </td>
           <td className="py-2 px-2 text-right text-sm tabular-nums whitespace-nowrap">
-            {lineTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} {currency}
+            {lineTotal.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })} {currency}
           </td>
           <td className="py-2 px-2 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
-            {lineVat.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+            {lineVat.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
           </td>
         </>
       )}

@@ -1,0 +1,120 @@
+{
+  "status": {
+    "not_contacted": "Ej kontaktad",
+    "contacted": "Kontaktad",
+    "in_progress": "Pågående",
+    "warm": "Varm",
+    "mrr": "MRR",
+    "completed": "Avslutad",
+    "lost": "Förlorad"
+  },
+  "page": {
+    "title": "Kunder",
+    "description": "Hantera dina kunder och leads",
+    "addCustomer": "Lägg till kund"
+  },
+  "list": {
+    "loading": "Laddar kunder...",
+    "emptyTitle": "Inga kunder än.",
+    "emptyHint": "Klicka på \"Lägg till kund\" för att komma igång.",
+    "headers": {
+      "name": "Namn",
+      "location": "Plats",
+      "email": "E-post",
+      "phone": "Telefon",
+      "category": "Kategori",
+      "status": "Status",
+      "actions": "Åtgärder"
+    },
+    "editTooltip": "Redigera kund",
+    "edit": "Redigera"
+  },
+  "type": {
+    "business": "Företag",
+    "private": "Privatperson"
+  },
+  "sections": {
+    "personalDetails": "Personuppgifter",
+    "companyInformation": "Företagsinformation",
+    "contactPerson": "Kontaktperson"
+  },
+  "fields": {
+    "firstName": "Förnamn",
+    "lastName": "Efternamn",
+    "name": "Namn",
+    "email": "E-post",
+    "phone": "Telefon",
+    "location": "Plats",
+    "personalNumber": "Personnummer (valfritt)",
+    "status": "Status",
+    "categoryOfWork": "Verksamhetskategori",
+    "description": "Beskrivning",
+    "website": "Webbplats",
+    "orgNumber": "Org.nr",
+    "legalName": "Juridiskt namn",
+    "mrr": "Månatlig återkommande intäkt (SEK)"
+  },
+  "placeholders": {
+    "firstName": "Förnamn",
+    "lastName": "Efternamn",
+    "personEmail": "person@exempel.se",
+    "phone": "+46 70 123 4567",
+    "stockholm": "Stockholm",
+    "personalNumber": "ÅÅÅÅMMDD-XXXX",
+    "companyName": "Företagsnamn",
+    "cityCountry": "Stad, Land",
+    "companyEmail": "kontakt@foretag.se",
+    "categoryOfWork": "t.ex. IT, Bygg, Detaljhandel",
+    "description": "Kort beskrivning av kunden...",
+    "descriptionShort": "Kort beskrivning...",
+    "website": "https://exempel.se",
+    "orgNumber": "556677-8899",
+    "legalName": "Fullständigt juridiskt namn",
+    "mrr": "10000",
+    "contactName": "Kontaktnamn",
+    "contactEmail": "person@foretag.se"
+  },
+  "add": {
+    "title": "Lägg till kund",
+    "description": "Lägg till en ny kund och dess kontaktperson.",
+    "useSameInfo": "Använd samma namn och kontaktuppgifter",
+    "sameInfoNote": "Kontaktpersonen använder samma namn, plats, telefon och e-post som kunden.",
+    "submit": "Lägg till kund"
+  },
+  "edit": {
+    "titleContactPerson": "Redigera kontaktperson",
+    "titleCustomer": "Redigera kund",
+    "descriptionContactPerson": "Redigera kontaktpersonen kopplad till denna kund.",
+    "descriptionCustomer": "Uppdatera kundinformation.",
+    "toggleCustomer": "Kund",
+    "toggleContactPerson": "Kontaktperson",
+    "save": "Spara ändringar"
+  },
+  "actions": {
+    "cancel": "Avbryt"
+  },
+  "detail": {
+    "detailTitle": "Kunddetaljer",
+    "loading": "Laddar...",
+    "notFoundTitle": "Kunden hittades inte",
+    "notFoundBody": "Denna kund existerar inte.",
+    "backToPipeline": "Tillbaka till pipeline",
+    "back": "Tillbaka",
+    "edit": "Redigera",
+    "companyInformation": "Företagsinformation",
+    "contactPerson": "Kontaktperson",
+    "noContactPerson": "Ingen kontaktperson kopplad.",
+    "info": {
+      "location": "Plats",
+      "phone": "Telefon",
+      "email": "E-post",
+      "website": "Webbplats",
+      "orgNumber": "Org.nr",
+      "legalName": "Juridiskt namn",
+      "description": "Beskrivning",
+      "name": "Namn"
+    },
+    "created": "Skapad: {{date}}",
+    "updated": "Uppdaterad: {{date}}"
+  }
+}

@@ -154,19 +154,15 @@ describe("InvoiceLineData optional inventory fields", () => {
 });
 
 describe("formatVatNumber", () => {
-  it("returns org number as-is for domestic invoices", () => {
-    expect(formatVatNumber("556677-8899", false)).toBe("556677-8899");
+  it("converts an org number to SE VAT format", () => {
+    expect(formatVatNumber("556677-8899")).toBe("SE556677889901");
   });
 
-  it("converts to EU VAT format for international invoices", () => {
-    expect(formatVatNumber("556677-8899", true)).toBe("SE556677889901");
-  });
-
-  it("strips non-digit characters for international format", () => {
-    expect(formatVatNumber("55 66 77-88 99", true)).toBe("SE556677889901");
+  it("strips non-digit characters", () => {
+    expect(formatVatNumber("55 66 77-88 99")).toBe("SE556677889901");
   });
 
   it("handles org number without dashes", () => {
-    expect(formatVatNumber("5566778899", true)).toBe("SE556677889901");
+    expect(formatVatNumber("5566778899")).toBe("SE556677889901");
   });
 });

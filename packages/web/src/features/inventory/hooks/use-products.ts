@@ -10,7 +10,7 @@ import {
 import { partnerCol, partnerDocRef } from "@/lib/firebase-partner";
 import { usePartner } from "@/lib/partner";
 import { removeUndefined } from "@/lib/firestore";
-import type { Product, ProductVariant } from "@crm/shared";
+import type { Product } from "@crm/shared";
 
 export interface ProductFormData {
   title: string;
@@ -18,7 +18,11 @@ export interface ProductFormData {
   imageUrl?: string;
   vendor?: string;
   status: "active" | "archived";
-  variants: Omit<ProductVariant, "id">[];
+  sku?: string;
+  price?: number;
+  costPrice?: number;
+  stock: number;
+  groupTitle?: string;
 }
 
 export function useProducts() {
@@ -54,20 +58,23 @@ export function useProducts() {
   const addProduct = useCallback(
     async (data: ProductFormData) => {
       const now = new Date().toISOString();
-      const variants = data.variants.map((v) => ({
-        ...v,
-        id: crypto.randomUUID(),
-      }));
-      const ref = await addDoc(partnerCol(partnerId, "products"), {
-        title: data.title,
-        status: data.status,
-        variants,
-        ...(data.description && { description: data.description }),
-        ...(data.imageUrl && { imageUrl: data.imageUrl }),
-        ...(data.vendor && { vendor: data.vendor }),
-        createdAt: now,
-        updatedAt: now,
-      });
+      const ref = await addDoc(
+        partnerCol(partnerId, "products"),
+        removeUndefined({
+          title: data.title,
+          status: data.status,
+          stock: data.stock,
+          sku: data.sku,
+          price: data.price,
+          costPrice: data.costPrice,
+          groupTitle: data.groupTitle,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          vendor: data.vendor,
+          createdAt: now,
+          updatedAt: now,
+        })
+      );
       return ref.id;
     },
     [partnerId]
@@ -91,35 +98,28 @@ export function useProducts() {
     [partnerId]
   );
 
-  // Update stock for a specific variant (source of truth update)
-  const updateVariantStock = useCallback(
-    async (productId: string, variantId: string, newStock: number) => {
-      const product = products.find((p) => p.id === productId);
-      if (!product) return;
-      const updatedVariants = product.variants.map((v) =>
-        v.id === variantId ? { ...v, stock: newStock } : v
-      );
+  // Set stock for an article (source of truth update)
+  const updateStock = useCallback(
+    async (productId: string, newStock: number) => {
       const now = new Date().toISOString();
       await updateDoc(partnerDocRef(partnerId, "products", productId), {
-        variants: removeUndefined(updatedVariants),
+        stock: newStock,
         updatedAt: now,
       });
     },
-    [partnerId, products]
+    [partnerId]
   );
 
-  // Decrement stock for a specific variant (used when recording a private sale)
-  const decrementVariantStock = useCallback(
-    async (productId: string, variantId: string, quantity: number) => {
+  // Decrement stock for an article (used when recording a private sale / invoice)
+  const decrementStock = useCallback(
+    async (productId: string, quantity: number) => {
       const product = products.find((p) => p.id === productId);
       if (!product) return;
-      const variant = product.variants.find((v) => v.id === variantId);
-      if (!variant) return;
-      const newStock = Math.max(0, variant.stock - quantity);
-      await updateVariantStock(productId, variantId, newStock);
+      const newStock = Math.max(0, product.stock - quantity);
+      await updateStock(productId, newStock);
       return newStock;
     },
-    [products, updateVariantStock]
+    [products, updateStock]
   );
 
   return {
@@ -128,7 +128,7 @@ export function useProducts() {
     addProduct,
     updateProduct,
     deleteProduct,
-    updateVariantStock,
-    decrementVariantStock,
+    updateStock,
+    decrementStock,
   };
 }

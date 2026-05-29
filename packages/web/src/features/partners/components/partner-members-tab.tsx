@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Trash2, Plus, UserCircle } from "lucide-react";
 import { PARTNER_ROLE_LABELS, type PartnerRole } from "@crm/shared";
 import { usePartnerMembers } from "../hooks/use-partner-members";
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function PartnerMembersTab({ partnerId }: Props) {
+  const { t } = useTranslation(["partners", "common"]);
   const { members, loading, addMember, removeMember, updateMemberRole } = usePartnerMembers(partnerId);
   const [showForm, setShowForm] = useState(false);
   const [email, setEmail] = useState("");
@@ -35,13 +37,13 @@ export function PartnerMembersTab({ partnerId }: Props) {
   };
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground px-1">Loading members...</p>;
+    return <p className="text-sm text-muted-foreground px-1">{t("members.loading")}</p>;
   }
 
   return (
     <div className="space-y-3">
       {members.length === 0 && !showForm && (
-        <p className="text-sm text-muted-foreground px-1">No members yet.</p>
+        <p className="text-sm text-muted-foreground px-1">{t("members.empty")}</p>
       )}
 
       {members.length > 0 && (
@@ -56,7 +58,7 @@ export function PartnerMembersTab({ partnerId }: Props) {
                 className="rounded-md border border-input bg-background px-2 py-1 text-xs"
               >
                 {(Object.keys(PARTNER_ROLE_LABELS) as PartnerRole[]).map((r) => (
-                  <option key={r} value={r}>{PARTNER_ROLE_LABELS[r]}</option>
+                  <option key={r} value={r}>{t(`role.${r}`)}</option>
                 ))}
               </select>
               {confirmDelete === member.email ? (
@@ -65,13 +67,13 @@ export function PartnerMembersTab({ partnerId }: Props) {
                     onClick={() => handleRemove(member.email)}
                     className="rounded px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
                   >
-                    Confirm
+                    {t("common:actions.confirm")}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(null)}
                     className="rounded px-2 py-1 text-xs text-muted-foreground hover:bg-muted"
                   >
-                    Cancel
+                    {t("common:actions.cancel")}
                   </button>
                 </div>
               ) : (
@@ -90,25 +92,25 @@ export function PartnerMembersTab({ partnerId }: Props) {
       {showForm ? (
         <form onSubmit={handleAdd} className="flex items-end gap-2">
           <div className="flex-1 space-y-1">
-            <label className="text-xs text-muted-foreground">Email</label>
+            <label className="text-xs text-muted-foreground">{t("members.emailLabel")}</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
+              placeholder={t("members.emailPlaceholder")}
               required
               className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Role</label>
+            <label className="text-xs text-muted-foreground">{t("members.roleLabel")}</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as PartnerRole)}
               className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
             >
               {(Object.keys(PARTNER_ROLE_LABELS) as PartnerRole[]).map((r) => (
-                <option key={r} value={r}>{PARTNER_ROLE_LABELS[r]}</option>
+                <option key={r} value={r}>{t(`role.${r}`)}</option>
               ))}
             </select>
           </div>
@@ -117,14 +119,14 @@ export function PartnerMembersTab({ partnerId }: Props) {
             disabled={submitting}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {submitting ? "Adding..." : "Add"}
+            {submitting ? t("members.adding") : t("common:actions.add")}
           </button>
           <button
             type="button"
             onClick={() => setShowForm(false)}
             className="rounded-md border border-input px-3 py-1.5 text-sm hover:bg-muted"
           >
-            Cancel
+            {t("common:actions.cancel")}
           </button>
         </form>
       ) : (
@@ -133,7 +135,7 @@ export function PartnerMembersTab({ partnerId }: Props) {
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
-          Add member
+          {t("members.addMember")}
         </button>
       )}
     </div>

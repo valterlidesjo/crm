@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Upload,
   X,
@@ -26,10 +27,24 @@ interface ImportEntriesDialogProps {
 
 type Step = "upload" | "preview" | "importing" | "done";
 
+/**
+ * Decodes raw CSV bytes to text. Tries strict UTF-8 first; if the bytes aren't
+ * valid UTF-8 (common with Excel-on-Windows exports), falls back to
+ * Windows-1252 so Swedish characters (å ä ö) survive.
+ */
+function decodeCsvBuffer(buffer: ArrayBuffer): string {
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(buffer);
+  } catch {
+    return new TextDecoder("windows-1252").decode(buffer);
+  }
+}
+
 export function ImportEntriesDialog({
   onClose,
   onImport,
 }: ImportEntriesDialogProps) {
+  const { t } = useTranslation("accounting");
   const [step, setStep] = useState<Step>("upload");
   const [dragOver, setDragOver] = useState(false);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
@@ -59,19 +74,18 @@ export function ImportEntriesDialog({
   }
 
   function handleFile(file: File) {
-    if (!file.name.endsWith(".csv")) {
-      setParseErrors(["Please upload a .csv file."]);
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      setParseErrors([t("import.errors.notCsv")]);
       return;
     }
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target?.result as string;
+      const buffer = e.target?.result as ArrayBuffer;
+      const text = decodeCsvBuffer(buffer);
       const format = detectCsvFormat(text);
 
       if (format === "unknown") {
-        setParseErrors([
-          "Okänt CSV-format. Ladda upp en CRM-exportfil eller en verifikationsjournal (Visma/Fortnox).",
-        ]);
+        setParseErrors([t("import.errors.unrecognizedFormat")]);
         return;
       }
 
@@ -88,7 +102,10 @@ export function ImportEntriesDialog({
         setStep("preview");
       }
     };
-    reader.readAsText(file, "utf-8");
+    // Read as bytes so we can fall back from UTF-8 to Windows-1252, which is
+    // what Excel on Windows commonly produces (and which mangles å/ä/ö under
+    // a naive UTF-8 read).
+    reader.readAsArrayBuffer(file);
   }
 
   function onFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -96,12 +113,12 @@ export function ImportEntriesDialog({
     if (file) handleFile(file);
   }
 
-  const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  function onDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) handleFile(file);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }
 
   async function handleImport() {
     setStep("importing");
@@ -122,7 +139,9 @@ export function ImportEntriesDialog({
     } catch (err) {
       clearInterval(progressInterval);
       setImportErrors([
-        `Import failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+        t("import.importFailed", {
+          message: err instanceof Error ? err.message : t("import.unknownError"),
+        }),
       ]);
     }
 
@@ -142,7 +161,7 @@ export function ImportEntriesDialog({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4 shrink-0">
           <h2 className="text-lg font-semibold">
-            Import journal entries from CSV
+            {t("import.title")}
           </h2>
           {step !== "importing" && (
             <button
@@ -163,25 +182,22 @@ export function ImportEntriesDialog({
               <div className="rounded-lg border border-border bg-muted/30 p-4 flex items-start gap-3">
                 <Download className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">Supported formats</p>
+                  <p className="text-sm font-medium">{t("import.supportedFormats")}</p>
                   <p className="text-sm text-muted-foreground mt-0.5">
-                    Two formats are accepted and detected automatically:
+                    {t("import.supportedFormatsIntro")}
                   </p>
                   <ul className="mt-1.5 space-y-0.5 text-sm text-muted-foreground list-disc list-inside">
                     <li>
                       <span className="text-foreground font-medium">
-                        CRM-format
+                        {t("import.crmFormat")}
                       </span>{" "}
-                      — one row per journal entry with category, transactionType,
-                      totalAmount, vatRate
+                      {t("import.crmFormatDescription")}
                     </li>
                     <li>
                       <span className="text-foreground font-medium">
-                        Verifikationsjournal
+                        {t("import.verifikationsjournal")}
                       </span>{" "}
-                      — export from Visma, Fortnox, or similar Swedish
-                      bookkeeping software (Datum, Verifikationsnummer, Konto,
-                      Debet, Kredit)
+                      {t("import.verifikationsjournalDescription")}
                     </li>
                   </ul>
                   <button
@@ -189,7 +205,7 @@ export function ImportEntriesDialog({
                     onClick={downloadTemplate}
                     className="mt-2 text-sm font-medium text-primary hover:underline"
                   >
-                    Download CRM-format template
+                    {t("import.downloadTemplate")}
                   </button>
                 </div>
               </div>
@@ -200,39 +216,39 @@ export function ImportEntriesDialog({
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Column
+                        {t("import.columns.column")}
                       </th>
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Required
+                        {t("import.columns.required")}
                       </th>
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Format / example
+                        {t("import.columns.format")}
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     {[
-                      ["date", "Yes", "YYYY-MM-DD  e.g. 2024-01-15"],
+                      ["date", t("import.columns.requiredYes"), t("import.columns.date")],
                       [
                         "transactionType",
-                        "Yes",
-                        '"cost" or "income"',
+                        t("import.columns.requiredYes"),
+                        t("import.columns.transactionType"),
                       ],
                       [
                         "category",
-                        "Yes",
-                        "Category ID from the list below, e.g. office_supplies",
+                        t("import.columns.requiredYes"),
+                        t("import.columns.category"),
                       ],
                       [
                         "totalAmount",
-                        "Yes",
-                        "Amount incl. VAT  e.g. 1250.00",
+                        t("import.columns.requiredYes"),
+                        t("import.columns.totalAmount"),
                       ],
-                      ["description", "No", "Free text description"],
+                      ["description", t("import.columns.requiredNo"), t("import.columns.description")],
                       [
                         "vatRate",
-                        "No",
-                        "0 | 6 | 12 | 25  (default: category's default)",
+                        t("import.columns.requiredNo"),
+                        t("import.columns.vatRate"),
                       ],
                     ].map(([col, req, fmt]) => (
                       <tr
@@ -260,8 +276,8 @@ export function ImportEntriesDialog({
                   className="text-xs text-muted-foreground hover:text-foreground underline"
                 >
                   {showCategories
-                    ? "Hide available categories"
-                    : "Show available category IDs"}
+                    ? t("import.hideCategories")
+                    : t("import.showCategories")}
                 </button>
 
                 {showCategories && (
@@ -270,16 +286,16 @@ export function ImportEntriesDialog({
                       <thead>
                         <tr className="bg-muted/30 border-b border-border">
                           <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                            ID (used in CSV)
+                            {t("import.categoryColumnId")}
                           </th>
                           <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                            Name
+                            {t("import.categoryColumnName")}
                           </th>
                           <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                            Type
+                            {t("import.categoryColumnType")}
                           </th>
                           <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                            Default VAT
+                            {t("import.categoryColumnDefaultVat")}
                           </th>
                         </tr>
                       </thead>
@@ -301,7 +317,9 @@ export function ImportEntriesDialog({
                                     : "text-green-600"
                                 }
                               >
-                                {cat.type === "cost" ? "Cost" : "Income"}
+                                {cat.type === "cost"
+                                  ? t("import.categoryTypeCost")
+                                  : t("import.categoryTypeIncome")}
                               </span>
                             </td>
                             <td className="px-3 py-2 text-muted-foreground">
@@ -332,10 +350,10 @@ export function ImportEntriesDialog({
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <p className="text-sm font-medium">
-                  Drag and drop CSV file here
+                  {t("import.dropHere")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  or click to select a file
+                  {t("import.clickToSelect")}
                 </p>
                 <input
                   ref={fileRef}
@@ -350,7 +368,7 @@ export function ImportEntriesDialog({
               {parseErrors.length > 0 && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-1">
                   <p className="text-sm font-medium text-red-700 flex items-center gap-1.5">
-                    <AlertTriangle className="h-4 w-4" /> Errors in CSV file
+                    <AlertTriangle className="h-4 w-4" /> {t("import.errorsTitle")}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {parseErrors.map((e, i) => (
@@ -373,14 +391,13 @@ export function ImportEntriesDialog({
                     <span className="font-medium text-foreground">
                       {parsedEntries.length}
                     </span>{" "}
-                    journal entr{parsedEntries.length !== 1 ? "ies" : "y"} found
-                    in file
+                    {t("import.foundInFile", { count: parsedEntries.length })}
                   </p>
                   {detectedFormat && (
                     <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
                       {detectedFormat === "verifikation"
-                        ? "Verifikationsjournal"
-                        : "CRM-format"}
+                        ? t("import.verifikationsjournal")
+                        : t("import.crmFormat")}
                     </span>
                   )}
                 </div>
@@ -396,7 +413,7 @@ export function ImportEntriesDialog({
                   }}
                   className="text-sm text-muted-foreground hover:text-foreground underline"
                 >
-                  Change file
+                  {t("import.changeFile")}
                 </button>
               </div>
 
@@ -404,7 +421,7 @@ export function ImportEntriesDialog({
               {parseWarnings.length > 0 && (
                 <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 space-y-1">
                   <p className="text-sm font-medium text-yellow-700 flex items-center gap-1.5">
-                    <AlertTriangle className="h-4 w-4" /> Warnings
+                    <AlertTriangle className="h-4 w-4" /> {t("import.warningsTitle")}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {parseWarnings.map((w, i) => (
@@ -422,25 +439,25 @@ export function ImportEntriesDialog({
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Date
+                        {t("import.previewColumns.date")}
                       </th>
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Description
+                        {t("import.previewColumns.description")}
                       </th>
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Type
+                        {t("import.previewType")}
                       </th>
                       <th className="px-3 py-2 text-left font-medium text-muted-foreground">
-                        Category
+                        {t("import.previewColumns.category")}
                       </th>
                       <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-                        Amount incl.
+                        {t("import.previewAmountIncl")}
                       </th>
                       <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-                        VAT
+                        {t("import.previewVat")}
                       </th>
                       <th className="px-3 py-2 text-right font-medium text-muted-foreground">
-                        VAT rate
+                        {t("import.previewVatRate")}
                       </th>
                     </tr>
                   </thead>
@@ -465,8 +482,8 @@ export function ImportEntriesDialog({
                             }
                           >
                             {entry.transactionType === "cost"
-                              ? "Cost"
-                              : "Income"}
+                              ? t("import.previewTypeCost")
+                              : t("import.previewTypeIncome")}
                           </span>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground text-xs font-mono">
@@ -491,7 +508,7 @@ export function ImportEntriesDialog({
                           colSpan={4}
                           className="px-3 py-2 text-sm font-medium text-muted-foreground"
                         >
-                          Total
+                          {t("import.previewTotal")}
                         </td>
                         <td className="px-3 py-2 text-right tabular-nums font-medium">
                           {formatAmount(
@@ -520,7 +537,10 @@ export function ImportEntriesDialog({
             <div className="flex flex-col items-center gap-4 py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm font-medium">
-                Importing entry {importProgress} of {importTotal}…
+                {t("import.importingProgress", {
+                  current: importProgress,
+                  total: importTotal,
+                })}
               </p>
               <div className="w-full max-w-xs rounded-full bg-muted h-2 overflow-hidden">
                 <div
@@ -538,13 +558,16 @@ export function ImportEntriesDialog({
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-10 w-10 text-green-600" />
               <p className="text-base font-semibold">
-                {importTotal - importErrors.length} of {importTotal}{" "}
-                journal entries imported!
+                {t("import.doneSummary", {
+                  imported: importTotal - importErrors.length,
+                  total: importTotal,
+                  count: importTotal,
+                })}
               </p>
               {importErrors.length > 0 && (
                 <div className="w-full rounded-lg border border-red-200 bg-red-50 p-4 space-y-1">
                   <p className="text-sm font-medium text-red-700">
-                    Errors during import:
+                    {t("import.importErrorsTitle")}
                   </p>
                   <ul className="list-disc list-inside space-y-0.5">
                     {importErrors.map((e, i) => (
@@ -567,7 +590,7 @@ export function ImportEntriesDialog({
               onClick={onClose}
               className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              Cancel
+              {t("import.cancel")}
             </button>
           )}
           {step === "preview" && (
@@ -577,14 +600,14 @@ export function ImportEntriesDialog({
                 onClick={onClose}
                 className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
               >
-                Cancel
+                {t("import.cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleImport}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
-                Import {parsedEntries.length} journal entr{parsedEntries.length !== 1 ? "ies" : "y"}
+                {t("import.importButton", { count: parsedEntries.length })}
               </button>
             </>
           )}
@@ -594,7 +617,7 @@ export function ImportEntriesDialog({
               onClick={onClose}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              Close
+              {t("import.close")}
             </button>
           )}
         </div>

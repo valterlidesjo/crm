@@ -6,6 +6,7 @@
     "types": ["vite/client"],
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "baseUrl": ".",

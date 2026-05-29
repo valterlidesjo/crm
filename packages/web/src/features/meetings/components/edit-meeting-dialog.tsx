@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -51,6 +52,8 @@ export function EditMeetingDialog({
   onDelete,
   isCalendarConnected,
 }: EditMeetingDialogProps) {
+  const { t } = useTranslation("meetings");
+  const { t: tCommon } = useTranslation("common");
   const [form, setForm] = useState<MeetingFormData>(meetingToFormData(meeting));
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -93,20 +96,18 @@ export function EditMeetingDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            Edit Meeting
+            {t("edit.title")}
             {isSyncedWithGoogle && (
               <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-normal text-green-700">
                 <CalendarCheck className="h-3 w-3" />
-                Synced
+                {t("edit.syncedBadge")}
               </span>
             )}
           </DialogTitle>
           <DialogDescription>
-            Update meeting details
             {isSyncedWithGoogle
-              ? " - changes will sync to Google Calendar"
-              : ""}
-            .
+              ? t("edit.descriptionWithCalendar")
+              : `${t("edit.descriptionBase")}.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -119,7 +120,7 @@ export function EditMeetingDialog({
             className="flex items-center gap-2 text-sm text-primary hover:underline"
           >
             <ExternalLink className="h-4 w-4" />
-            View in Google Calendar
+            {t("edit.viewInGoogle")}
           </a>
         )}
 
@@ -127,21 +128,21 @@ export function EditMeetingDialog({
           {/* Meeting Details */}
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Meeting Details
+              {t("sections.details")}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Title" required className="sm:col-span-2">
+              <Field label={t("fields.title")} required className="sm:col-span-2">
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => handleChange("title", e.target.value)}
                   className={INPUT_CLASS}
                   required
-                  placeholder="Meeting title"
+                  placeholder={t("placeholders.title")}
                 />
               </Field>
 
-              <Field label="Start Time" required>
+              <Field label={t("fields.startTime")} required>
                 <input
                   type="datetime-local"
                   value={form.startTime}
@@ -151,7 +152,7 @@ export function EditMeetingDialog({
                 />
               </Field>
 
-              <Field label="End Time" required>
+              <Field label={t("fields.endTime")} required>
                 <input
                   type="datetime-local"
                   value={form.endTime}
@@ -161,13 +162,13 @@ export function EditMeetingDialog({
                 />
               </Field>
 
-              <Field label="Location">
+              <Field label={t("fields.location")}>
                 <input
                   type="text"
                   value={form.location || ""}
                   onChange={(e) => handleChange("location", e.target.value)}
                   className={INPUT_CLASS}
-                  placeholder="Office, Zoom link, etc."
+                  placeholder={t("placeholders.location")}
                 />
               </Field>
 
@@ -183,16 +184,16 @@ export function EditMeetingDialog({
                   htmlFor="allDay-edit"
                   className="text-sm text-muted-foreground cursor-pointer"
                 >
-                  All day event
+                  {t("fields.allDay")}
                 </label>
               </div>
 
-              <Field label="Description" className="sm:col-span-2">
+              <Field label={t("fields.description")} className="sm:col-span-2">
                 <textarea
                   value={form.description || ""}
                   onChange={(e) => handleChange("description", e.target.value)}
                   className={cn(INPUT_CLASS, "min-h-[80px] resize-y")}
-                  placeholder="Meeting agenda, notes..."
+                  placeholder={t("placeholders.description")}
                   rows={3}
                 />
               </Field>
@@ -205,7 +206,7 @@ export function EditMeetingDialog({
               <div className="border-t border-border" />
               <div>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Attendees
+                  {t("sections.attendees")}
                 </h3>
                 <AttendeeInput
                   attendees={form.attendees}
@@ -224,7 +225,7 @@ export function EditMeetingDialog({
                       htmlFor="sendNotifications-edit"
                       className="text-sm text-muted-foreground cursor-pointer"
                     >
-                      Notify attendees of changes
+                      {t("edit.notifyChanges")}
                     </label>
                   </div>
                 )}
@@ -236,16 +237,16 @@ export function EditMeetingDialog({
           <div className="border-t border-border" />
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Link to CRM
+              {t("sections.linkToCrm")}
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Customer">
+              <Field label={t("fields.customer")}>
                 <select
                   value={form.customerId || ""}
                   onChange={(e) => handleChange("customerId", e.target.value)}
                   className={INPUT_CLASS}
                 >
-                  <option value="">Select customer...</option>
+                  <option value="">{t("placeholders.selectCustomer")}</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -254,22 +255,22 @@ export function EditMeetingDialog({
                 </select>
               </Field>
 
-              <Field label="Internal Notes" className="sm:col-span-2">
+              <Field label={t("fields.internalNotes")} className="sm:col-span-2">
                 <textarea
                   value={form.notes || ""}
                   onChange={(e) => handleChange("notes", e.target.value)}
                   className={cn(INPUT_CLASS, "min-h-[60px] resize-y")}
-                  placeholder="Internal notes (not shared with attendees)"
+                  placeholder={t("placeholders.internalNotes")}
                   rows={2}
                 />
               </Field>
 
-              <Field label="Outcome" className="sm:col-span-2">
+              <Field label={t("fields.outcome")} className="sm:col-span-2">
                 <textarea
                   value={form.notes || ""}
                   onChange={(e) => handleChange("notes", e.target.value)}
                   className={cn(INPUT_CLASS, "min-h-[60px] resize-y")}
-                  placeholder="Meeting outcome, action items..."
+                  placeholder={t("placeholders.outcome")}
                   rows={2}
                 />
               </Field>
@@ -282,7 +283,7 @@ export function EditMeetingDialog({
               {showDeleteConfirm ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Delete this meeting?
+                    {t("edit.deleteConfirm")}
                   </span>
                   <button
                     type="button"
@@ -290,14 +291,14 @@ export function EditMeetingDialog({
                     disabled={deleting}
                     className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
-                    {deleting ? "Deleting..." : "Yes, delete"}
+                    {deleting ? t("edit.deleting") : t("edit.deleteYes")}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(false)}
                     className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted transition-colors"
                   >
-                    Cancel
+                    {tCommon("actions.cancel")}
                   </button>
                 </div>
               ) : (
@@ -307,7 +308,7 @@ export function EditMeetingDialog({
                   className="flex items-center gap-2 rounded-md border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
-                  Delete
+                  {tCommon("actions.delete")}
                 </button>
               )}
             </div>
@@ -317,14 +318,14 @@ export function EditMeetingDialog({
                 onClick={() => onOpenChange(false)}
                 className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
-                Cancel
+                {tCommon("actions.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {submitting ? "Saving..." : "Save Changes"}
+                {submitting ? t("edit.submitting") : t("edit.submit")}
               </button>
             </div>
           </div>

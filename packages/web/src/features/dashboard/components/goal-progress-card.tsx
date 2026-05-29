@@ -1,4 +1,5 @@
 import type { CompanyProfile } from "@crm/shared";
+import { useTranslation, Trans } from "react-i18next";
 import { formatCurrency, formatDate, getDaysRemaining } from "@/lib/format";
 
 interface GoalProgressCardProps {
@@ -50,18 +51,21 @@ export function GoalProgressCard({
   currentIncome,
   currentMrr,
 }: GoalProgressCardProps) {
+  const { t } = useTranslation("dashboard");
   const hasGoals = profile?.incomeGoal || profile?.mrrGoal;
 
   if (!hasGoals) {
     return (
       <div className="rounded-lg border border-border bg-background p-6">
-        <h2 className="text-lg font-semibold mb-4">Goals</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("goals.heading")}</h2>
         <p className="text-sm text-muted-foreground">
-          No goals set. Go to{" "}
-          <a href="/profile" className="text-primary underline">
-            Profile
-          </a>{" "}
-          to set your income and MRR goals.
+          <Trans
+            i18nKey="goals.empty"
+            ns="dashboard"
+            components={[
+              <a href="/profile" className="text-primary underline" />,
+            ]}
+          />
         </p>
       </div>
     );
@@ -73,19 +77,19 @@ export function GoalProgressCard({
 
   return (
     <div className="rounded-lg border border-border bg-background p-6">
-      <h2 className="text-lg font-semibold mb-6">Goals</h2>
+      <h2 className="text-lg font-semibold mb-6">{t("goals.heading")}</h2>
 
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         {profile?.incomeGoal && (
           <GoalSection
-            title="Total Income Goal"
+            title={t("goals.incomeGoal")}
             current={currentIncome}
             target={profile.incomeGoal}
           />
         )}
         {profile?.mrrGoal && (
           <GoalSection
-            title="MRR Goal"
+            title={t("goals.mrrGoal")}
             current={currentMrr}
             target={profile.mrrGoal}
           />
@@ -96,16 +100,18 @@ export function GoalProgressCard({
         <div className="mt-6 pt-6 border-t border-border">
           <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
             <div>
-              <span className="text-muted-foreground">Deadline: </span>
+              <span className="text-muted-foreground">{t("goals.deadline")}</span>
               <span className="font-medium">{formatDate(profile.goalDeadline)}</span>
             </div>
             {daysRemaining !== null && (
               <div>
-                <span className="text-muted-foreground">Days remaining: </span>
+                <span className="text-muted-foreground">{t("goals.daysRemaining")}</span>
                 <span
                   className={`font-medium ${daysRemaining < 0 ? "text-destructive" : daysRemaining < 30 ? "text-yellow-600" : ""}`}
                 >
-                  {daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : daysRemaining}
+                  {daysRemaining < 0
+                    ? t("goals.daysOverdue", { count: Math.abs(daysRemaining) })
+                    : daysRemaining}
                 </span>
               </div>
             )}
@@ -115,7 +121,7 @@ export function GoalProgressCard({
 
       {profile?.goalDescription && (
         <div className="mt-6 pt-6 border-t border-border">
-          <h3 className="text-sm font-medium mb-2">How to achieve current goal?</h3>
+          <h3 className="text-sm font-medium mb-2">{t("goals.achieveHeading")}</h3>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">
             {profile.goalDescription}
           </p>

@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { PageContainer } from "@/components/layout/page-container";
 import { InvoiceForm } from "@/features/invoices/components/invoice-form";
 import { CancelInvoiceDialog } from "@/features/invoices/components/cancel-invoice-dialog";
 import { useInvoices } from "@/features/invoices/hooks/use-invoices";
 import { requireAdmin } from "@/lib/route-guards";
-import { INVOICE_STATUS_LABELS } from "@crm/shared";
 import { ArrowLeft, Send, CheckCircle, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/invoicing/$invoiceId")({
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/invoicing/$invoiceId")({
 });
 
 function InvoiceDetailPage() {
+  const { t } = useTranslation("invoices");
   const { invoiceId } = Route.useParams();
   const navigate = useNavigate();
   const { invoices, loading, updateInvoice, cancelInvoice, markAsPaid } = useInvoices();
@@ -53,24 +54,24 @@ function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <PageContainer title="Invoice">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+      <PageContainer title={t("detail.invoice")}>
+        <p className="text-sm text-muted-foreground">{t("detail.loading")}</p>
       </PageContainer>
     );
   }
 
   if (!invoice) {
     return (
-      <PageContainer title="Invoice">
-        <p className="text-sm text-muted-foreground">Invoice not found.</p>
+      <PageContainer title={t("detail.invoice")}>
+        <p className="text-sm text-muted-foreground">{t("detail.notFound")}</p>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer
-      title={`Invoice ${invoice.invoiceNumber}`}
-      description="Edit invoice details"
+      title={t("detail.pageTitle", { number: invoice.invoiceNumber })}
+      description={t("detail.pageDescription")}
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -80,13 +81,13 @@ function InvoiceDetailPage() {
             className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to invoices
+            {t("detail.back")}
           </button>
 
           <div className="flex items-center gap-3">
             {invoice.status === "paid" && (
               <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                {INVOICE_STATUS_LABELS.paid}
+                {t("status.paid")}
               </span>
             )}
 
@@ -98,7 +99,7 @@ function InvoiceDetailPage() {
                 className="flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
-                {updating ? "Updating..." : "Mark as Sent"}
+                {updating ? t("detail.updating") : t("detail.markAsSent")}
               </button>
             )}
 
@@ -110,7 +111,7 @@ function InvoiceDetailPage() {
                 className="flex items-center gap-1.5 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 <CheckCircle className="h-4 w-4" />
-                {updating ? "Updating..." : "Mark as Paid"}
+                {updating ? t("detail.updating") : t("detail.markAsPaid")}
               </button>
             )}
 
@@ -125,7 +126,7 @@ function InvoiceDetailPage() {
                 className="flex items-center gap-1.5 rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
-                Annullera faktura
+                {t("detail.cancelInvoice")}
               </button>
             )}
           </div>

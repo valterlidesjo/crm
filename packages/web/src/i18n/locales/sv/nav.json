@@ -1,0 +1,16 @@
+{
+  "dashboard": "Översikt",
+  "customers": "Kunder",
+  "pipeline": "Pipeline",
+  "meetings": "Möten",
+  "invoicing": "Fakturering",
+  "quotes": "Offerter",
+  "accounting": "Bokföring",
+  "inventory": "Lager",
+  "orders": "Ordrar",
+  "purchaseOrders": "Inköpsordrar",
+  "profile": "Profil",
+  "settings": "Inställningar",
+  "partners": "Partner",
+  "shopify": "Shopify"
+}

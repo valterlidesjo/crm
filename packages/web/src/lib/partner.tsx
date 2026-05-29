@@ -54,19 +54,24 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
   // null = loading; string[] = loaded (may be empty, handled by dashboard with DEFAULT_DASHBOARD_KPIS)
   const [dashboardKpis, setDashboardKpis] = useState<string[] | null>(null);
 
-  // Clear stale emulation keys if the resolved user is not a superAdmin.
-  // Handles manual sessionStorage manipulation by non-admin users.
+  const canEmulate =
+    authState.status === "authenticated" &&
+    authState.platformRole === "superAdmin";
+  // Non-superAdmins can never emulate — ignore any emulation state during render
+  // (handles manual sessionStorage manipulation by non-admin users).
+  const effectiveEmulation = canEmulate ? emulation : null;
+
+  // Drop stale sessionStorage keys for non-superAdmins. No state update needed:
+  // effectiveEmulation already ignores them while rendering.
   useEffect(() => {
-    if (authState.status !== "authenticated") return;
-    if (authState.platformRole !== "superAdmin" && emulation !== null) {
+    if (authState.status === "authenticated" && !canEmulate) {
       sessionStorage.removeItem(EMULATION_ID_KEY);
       sessionStorage.removeItem(EMULATION_NAME_KEY);
-      setEmulation(null);
     }
-  }, [authState, emulation]);
+  }, [authState, canEmulate]);
 
-  const isEmulating = emulation !== null;
-  const activePartnerId = emulation?.id ?? ownPartnerId;
+  const isEmulating = effectiveEmulation !== null;
+  const activePartnerId = effectiveEmulation?.id ?? ownPartnerId;
 
   useEffect(() => {
     if (!activePartnerId) return;
@@ -123,7 +128,7 @@ export function PartnerProvider({ children }: { children: ReactNode }) {
     isFeatureEnabled: (key) => (isEmulating ? true : isReallyEnabled(key)),
     isReallyEnabled,
     isEmulating,
-    emulatedPartnerName: emulation?.name ?? null,
+    emulatedPartnerName: effectiveEmulation?.name ?? null,
     startEmulation,
     stopEmulation,
   };

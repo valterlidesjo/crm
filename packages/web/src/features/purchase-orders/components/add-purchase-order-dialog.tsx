@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Plus, Trash2 } from "lucide-react";
-import { ACCOUNT_CATEGORIES, CURRENCY_LABELS, calculatePOTotalSEK } from "@crm/shared";
+import { currentLocale } from "@/i18n";
+import { ACCOUNT_CATEGORIES, Currency, calculatePOTotalSEK } from "@crm/shared";
 import type { Product, PurchaseOrderItem } from "@crm/shared";
 import type { PurchaseOrderFormData } from "../hooks/use-purchase-orders";
 
@@ -10,10 +12,7 @@ const PURCHASE_CATEGORIES = ACCOUNT_CATEGORIES.filter((c) =>
   )
 );
 
-const CURRENCIES = Object.entries(CURRENCY_LABELS) as [
-  PurchaseOrderItem["currency"],
-  string,
-][];
+const CURRENCIES = Currency.literals as readonly PurchaseOrderItem["currency"][];
 
 // Default exchange rates — user always overrides these, they are just starting values
 const DEFAULT_RATES: Record<PurchaseOrderItem["currency"], number> = {
@@ -25,9 +24,7 @@ const DEFAULT_RATES: Record<PurchaseOrderItem["currency"], number> = {
 
 interface ItemRow {
   productId: string;
-  variantId: string;
   productTitle: string;
-  variantTitle: string;
   quantity: string;
   unitPriceInCurrency: string;
   currency: PurchaseOrderItem["currency"];
@@ -45,6 +42,7 @@ export function AddPurchaseOrderDialog({
   onSave,
   onClose,
 }: AddPurchaseOrderDialogProps) {
+  const { t } = useTranslation("purchaseOrders");
   const today = new Date().toISOString().slice(0, 10);
 
   const [supplierName, setSupplierName] = useState("");
@@ -62,9 +60,7 @@ export function AddPurchaseOrderDialog({
   function emptyItem(): ItemRow {
     return {
       productId: "",
-      variantId: "",
       productTitle: "",
-      variantTitle: "",
       quantity: "1",
       unitPriceInCurrency: "",
       currency: "CNY",
@@ -100,22 +96,13 @@ export function AddPurchaseOrderDialog({
     );
   }
 
-  function handleProductVariantChange(index: number, variantComposite: string) {
-    // variantComposite = "productId::variantId"
-    const [productId, variantId] = variantComposite.split("::");
+  function handleProductChange(index: number, productId: string) {
     const product = products.find((p) => p.id === productId);
-    const variant = product?.variants.find((v) => v.id === variantId);
-    if (!product || !variant) return;
+    if (!product) return;
     setItems((prev) =>
       prev.map((item, i) =>
         i === index
-          ? {
-              ...item,
-              productId,
-              variantId,
-              productTitle: product.title,
-              variantTitle: variant.title,
-            }
+          ? { ...item, productId, productTitle: product.title }
           : item
       )
     );
@@ -133,20 +120,19 @@ export function AddPurchaseOrderDialog({
   );
 
   function validate(): string | null {
-    if (!supplierName.trim()) return "Enter supplier name";
-    if (items.length === 0) return "At least one item is required";
+    if (!supplierName.trim()) return t("add.validation.enterSupplier");
+    if (items.length === 0) return t("add.validation.atLeastOneItem");
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (!item.productId || !item.variantId)
-        return `Select product for row ${i + 1}`;
+      if (!item.productId) return t("add.validation.selectArticle", { row: i + 1 });
       const qty = parseFloat(item.quantity);
-      if (!qty || qty <= 0) return `Quantity must be > 0 for row ${i + 1}`;
+      if (!qty || qty <= 0) return t("add.validation.quantityPositive", { row: i + 1 });
       const price = parseFloat(item.unitPriceInCurrency);
-      if (!price || price <= 0) return `Price must be > 0 for row ${i + 1}`;
+      if (!price || price <= 0) return t("add.validation.pricePositive", { row: i + 1 });
       if (item.currency !== "SEK") {
         const rate = parseFloat(item.rateToSEK);
         if (!rate || rate <= 0)
-          return `Exchange rate must be > 0 for row ${i + 1}`;
+          return t("add.validation.ratePositive", { row: i + 1 });
       }
     }
     return null;
@@ -171,9 +157,7 @@ export function AddPurchaseOrderDialog({
         notes: notes.trim() || undefined,
         items: items.map((item) => ({
           productId: item.productId,
-          variantId: item.variantId,
           productTitle: item.productTitle,
-          variantTitle: item.variantTitle,
           quantity: parseFloat(item.quantity),
           unitPriceInCurrency: parseFloat(item.unitPriceInCurrency),
           currency: item.currency,
@@ -182,7 +166,7 @@ export function AddPurchaseOrderDialog({
       });
       onClose();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("add.genericError"));
     } finally {
       setSaving(false);
     }
@@ -198,7 +182,7 @@ export function AddPurchaseOrderDialog({
       <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-background shadow-xl">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-6 py-4">
-          <h2 className="text-lg font-semibold">New Purchase Order</h2>
+          <h2 className="text-lg font-semibold">{t("add.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -213,19 +197,19 @@ export function AddPurchaseOrderDialog({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Supplier <span className="text-red-500">*</span>
+                {t("add.fields.supplier")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={supplierName}
                 onChange={(e) => setSupplierName(e.target.value)}
-                placeholder="e.g. Guangzhou Mirrors Co."
+                placeholder={t("add.placeholders.supplier")}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Order Date <span className="text-red-500">*</span>
+                {t("add.fields.orderDate")} <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -236,7 +220,7 @@ export function AddPurchaseOrderDialog({
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Expected Delivery Date
+                {t("add.fields.expectedDeliveryDate")}
               </label>
               <input
                 type="date"
@@ -247,7 +231,7 @@ export function AddPurchaseOrderDialog({
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Markup % (freight, customs, handling)
+                {t("add.fields.markup")}
               </label>
               <div className="relative">
                 <input
@@ -266,7 +250,7 @@ export function AddPurchaseOrderDialog({
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Accounting Category <span className="text-red-500">*</span>
+                {t("add.fields.accountingCategory")} <span className="text-red-500">*</span>
               </label>
               <select
                 value={accountingCategoryId}
@@ -282,13 +266,13 @@ export function AddPurchaseOrderDialog({
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium">
-                Notes
+                {t("add.fields.notes")}
               </label>
               <input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Optional"
+                placeholder={t("add.placeholders.notes")}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
@@ -298,26 +282,26 @@ export function AddPurchaseOrderDialog({
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-medium">
-                Items <span className="text-red-500">*</span>
+                {t("add.items.heading")} <span className="text-red-500">*</span>
               </h3>
               <button
                 type="button"
                 onClick={addItem}
                 className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
               >
-                <Plus className="h-3.5 w-3.5" /> Add row
+                <Plus className="h-3.5 w-3.5" /> {t("add.items.addRow")}
               </button>
             </div>
 
             <div className="space-y-3">
               {/* Column headers */}
               <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
-                <span className="col-span-3">Product / variant</span>
-                <span className="col-span-1 text-right">Qty</span>
-                <span className="col-span-2 text-right">Price</span>
-                <span className="col-span-2">Currency</span>
-                <span className="col-span-2">Rate (1→SEK)</span>
-                <span className="col-span-1 text-right">Cost SEK</span>
+                <span className="col-span-3">{t("add.items.columns.article")}</span>
+                <span className="col-span-1 text-right">{t("add.items.columns.qty")}</span>
+                <span className="col-span-2 text-right">{t("add.items.columns.price")}</span>
+                <span className="col-span-2">{t("add.items.columns.currency")}</span>
+                <span className="col-span-2">{t("add.items.columns.rate")}</span>
+                <span className="col-span-1 text-right">{t("add.items.columns.costSEK")}</span>
                 <span className="col-span-1" />
               </div>
 
@@ -339,30 +323,22 @@ export function AddPurchaseOrderDialog({
                     key={i}
                     className="grid grid-cols-12 gap-2 items-center rounded-lg border border-border/60 bg-muted/20 p-2"
                   >
-                    {/* Product/variant picker */}
+                    {/* Article picker */}
                     <div className="col-span-3">
                       <select
-                        value={
-                          item.productId && item.variantId
-                            ? `${item.productId}::${item.variantId}`
-                            : ""
-                        }
+                        value={item.productId}
                         onChange={(e) =>
-                          handleProductVariantChange(i, e.target.value)
+                          handleProductChange(i, e.target.value)
                         }
                         className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/30"
                       >
-                        <option value="">Select variant…</option>
-                        {activeProducts.map((p) =>
-                          p.variants.map((v) => (
-                            <option
-                              key={`${p.id}::${v.id}`}
-                              value={`${p.id}::${v.id}`}
-                            >
-                              {p.title} — {v.title}
-                            </option>
-                          ))
-                        )}
+                        <option value="">{t("add.items.selectArticle")}</option>
+                        {activeProducts.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.title}
+                            {p.sku ? ` (${p.sku})` : ""}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -401,9 +377,9 @@ export function AddPurchaseOrderDialog({
                       }
                       className="col-span-2 rounded-md border border-border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/30"
                     >
-                      {CURRENCIES.map(([code, label]) => (
+                      {CURRENCIES.map((code) => (
                         <option key={code} value={code}>
-                          {code} — {label.split(" – ")[1]}
+                          {code} — {t(`currency.${code}`)}
                         </option>
                       ))}
                     </select>
@@ -432,7 +408,7 @@ export function AddPurchaseOrderDialog({
                     {/* Line cost preview */}
                     <div className="col-span-1 text-right text-xs font-medium tabular-nums text-muted-foreground">
                       {itemCostSEK > 0
-                        ? itemCostSEK.toLocaleString("sv-SE", {
+                        ? itemCostSEK.toLocaleString(currentLocale(), {
                             maximumFractionDigits: 0,
                           })
                         : "—"}
@@ -459,15 +435,15 @@ export function AddPurchaseOrderDialog({
           <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                Estimated total cost
+                {t("add.estimatedTotal")}
                 {markupPercent && parseFloat(markupPercent) > 0 && (
                   <span className="ml-1 text-xs">
-                    (incl. {markupPercent}% markup)
+                    {t("add.inclMarkup", { markup: markupPercent })}
                   </span>
                 )}
               </span>
               <span className="text-lg font-semibold tabular-nums">
-                {previewTotal.toLocaleString("sv-SE", {
+                {previewTotal.toLocaleString(currentLocale(), {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}{" "}
@@ -489,14 +465,14 @@ export function AddPurchaseOrderDialog({
               onClick={onClose}
               className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
             >
-              Cancel
+              {t("add.cancel")}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {saving ? "Saving..." : "Create order"}
+              {saving ? t("add.saving") : t("add.create")}
             </button>
           </div>
         </form>

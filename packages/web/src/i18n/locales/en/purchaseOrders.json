@@ -1,0 +1,90 @@
+{
+  "currency": {
+    "SEK": "Kronor",
+    "EUR": "Euro",
+    "USD": "Dollar",
+    "CNY": "Yuan"
+  },
+  "status": {
+    "pending": "Pending",
+    "received": "Received",
+    "cancelled": "Cancelled"
+  },
+  "page": {
+    "title": "Purchase Orders",
+    "description": "Record supplier purchases and update inventory on arrival",
+    "newOrder": "New purchase order",
+    "loading": "Loading..."
+  },
+  "list": {
+    "emptyTitle": "No purchase orders",
+    "emptyHint": "Create a new order to track supplier purchases",
+    "headers": {
+      "supplier": "Supplier",
+      "date": "Date",
+      "items": "Items",
+      "total": "Total (SEK)",
+      "status": "Status"
+    },
+    "delivery": "Delivery: {{date}}",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "receive": "Receive",
+    "cancel": "Cancel"
+  },
+  "add": {
+    "title": "New Purchase Order",
+    "fields": {
+      "supplier": "Supplier",
+      "orderDate": "Order Date",
+      "expectedDeliveryDate": "Expected Delivery Date",
+      "markup": "Markup % (freight, customs, handling)",
+      "accountingCategory": "Accounting Category",
+      "notes": "Notes"
+    },
+    "placeholders": {
+      "supplier": "e.g. Guangzhou Mirrors Co.",
+      "notes": "Optional"
+    },
+    "items": {
+      "heading": "Items",
+      "addRow": "Add row",
+      "columns": {
+        "article": "Article",
+        "qty": "Qty",
+        "price": "Price",
+        "currency": "Currency",
+        "rate": "Rate (1→SEK)",
+        "costSEK": "Cost SEK"
+      },
+      "selectArticle": "Select article…"
+    },
+    "estimatedTotal": "Estimated total cost",
+    "inclMarkup": "(incl. {{markup}}% markup)",
+    "validation": {
+      "enterSupplier": "Enter supplier name",
+      "atLeastOneItem": "At least one item is required",
+      "selectArticle": "Select article for row {{row}}",
+      "quantityPositive": "Quantity must be > 0 for row {{row}}",
+      "pricePositive": "Price must be > 0 for row {{row}}",
+      "ratePositive": "Exchange rate must be > 0 for row {{row}}"
+    },
+    "genericError": "Something went wrong. Please try again.",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "create": "Create order"
+  },
+  "receive": {
+    "title": "Confirm Receipt",
+    "supplier": "Supplier",
+    "items": "Items",
+    "totalCost": "Total cost",
+    "inventoryUpdated": "Inventory will be updated:",
+    "pcs": "+{{quantity}} pcs",
+    "explanation": "Inventory will be updated and a cost transaction of <0>{{total}} kr</0> will be automatically created in accounting.",
+    "genericError": "Something went wrong. Please try again.",
+    "cancel": "Cancel",
+    "confirming": "Confirming...",
+    "confirm": "Confirm receipt"
+  }
+}

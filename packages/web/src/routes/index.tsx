@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/layout/page-container";
 import { useDashboardStats } from "@/features/dashboard/hooks/use-dashboard-stats";
 import { useCompanyProfile } from "@/features/profile/hooks/use-profile";
@@ -18,12 +19,17 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const PERIOD_OPTIONS: { value: DashboardPeriod; label: string }[] = [
-  { value: "last-30-days", label: "30 days" },
-  { value: "last-90-days", label: "3 mo" },
-  { value: "last-365-days", label: "12 mo" },
-  { value: "all-time", label: "All time" },
+// `labelKey` indexes the "dashboard:period" i18n namespace.
+const PERIOD_OPTIONS: { value: DashboardPeriod; labelKey: string }[] = [
+  { value: "last-30-days", labelKey: "period.last30Days" },
+  { value: "last-90-days", labelKey: "period.last90Days" },
+  { value: "last-365-days", labelKey: "period.last365Days" },
+  { value: "all-time", labelKey: "period.allTime" },
 ];
+
+// KPI ids are snake_case stable identifiers; i18n keys are lowerCamelCase.
+const kpiI18nKey = (id: KpiId): string =>
+  id.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
 
 function StatCard({
   label,
@@ -45,6 +51,7 @@ function StatCard({
 }
 
 function Dashboard() {
+  const { t } = useTranslation("dashboard");
   const [period, setPeriod] = useState<DashboardPeriod>("last-30-days");
   const { dashboardKpis } = usePartner();
   const stats = useDashboardStats(period);
@@ -73,8 +80,8 @@ function Dashboard() {
 
   return (
     <PageContainer
-      title="Dashboard"
-      description="Overview of your activity"
+      title={t("title")}
+      description={t("description")}
     >
       {showPeriodToggle && (
         <div className="flex gap-1 mb-4">
@@ -89,7 +96,7 @@ function Dashboard() {
                   : "text-muted-foreground hover:bg-muted"
               )}
             >
-              {opt.label}
+              {t(opt.labelKey)}
             </button>
           ))}
         </div>
@@ -99,7 +106,7 @@ function Dashboard() {
         {enabledKpis.map((id) => (
           <StatCard
             key={id}
-            label={KPI_CATALOG[id].label}
+            label={t(`kpi.${kpiI18nKey(id)}.label`)}
             value={kpiValues[id]}
             loading={stats.loading}
           />
@@ -109,7 +116,7 @@ function Dashboard() {
       <div className="mt-6">
         {profileLoading ? (
           <div className="rounded-lg border border-border bg-background p-6">
-            <p className="text-sm text-muted-foreground">Loading goals...</p>
+            <p className="text-sm text-muted-foreground">{t("goals.loading")}</p>
           </div>
         ) : (
           <GoalProgressCard

@@ -84,7 +84,15 @@
       "Bash(git fetch:*)",
       "Bash(find /Users/valter/business/crm -type f \\\\\\(-name .env* -o -name *.rules -o -name cors.json -o -name firebase.json \\\\\\))",
       "Bash(xargs cat:*)",
-      "Bash(git -C /Users/valter/business/crm log --all --oneline)"
+      "Bash(git -C /Users/valter/business/crm log --all --oneline)",
+      "Bash(gh repo *)",
+      "Bash(gh label *)",
+      "Bash(gh issue *)",
+      "Read(//Users/valter/.claude/skills/**)",
+      "Read(//Users/valter/.claude/**)",
+      "WebFetch(domain:docs.cdon.com)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [
       "Bash(rm -rf*)",

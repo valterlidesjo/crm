@@ -1,0 +1,96 @@
+{
+  "page": {
+    "title": "Quotes",
+    "description": "Create and manage quotes",
+    "newQuote": "New Quote",
+    "close": "Close",
+    "loading": "Loading quotes..."
+  },
+  "detail": {
+    "title": "Quote",
+    "titleWithNumber": "Quote {{number}}",
+    "description": "Edit quote details",
+    "loading": "Loading...",
+    "notFound": "Quote not found.",
+    "back": "Back to quotes",
+    "markSent": "Mark as Sent",
+    "marking": "Updating..."
+  },
+  "status": {
+    "draft": "Draft",
+    "created": "Created",
+    "sent": "Sent",
+    "accepted": "Accepted",
+    "rejected": "Rejected"
+  },
+  "list": {
+    "empty": "No quotes yet. Create your first quote above.",
+    "unknownCustomer": "Unknown",
+    "columns": {
+      "quoteNumber": "Quote #",
+      "customer": "Customer",
+      "total": "Total",
+      "status": "Status",
+      "validUntil": "Valid Until",
+      "created": "Created"
+    },
+    "edit": "Edit",
+    "convert": "Convert",
+    "delete": "Delete",
+    "deleteTitle": "Delete quote {{number}}?",
+    "deleteDescription": "This action cannot be undone. The quote will be permanently deleted."
+  },
+  "form": {
+    "customer": "Customer",
+    "selectCustomer": "Select customer...",
+    "addCustomer": "Add new customer",
+    "validUntil": "Valid Until",
+    "columns": {
+      "description": "Description",
+      "qty": "Qty",
+      "unitPrice": "Unit Price",
+      "vat": "VAT",
+      "billing": "Billing",
+      "total": "Total",
+      "vatAmt": "VAT Amt"
+    },
+    "addLine": "Add line",
+    "addText": "Add text",
+    "subtotal": "Subtotal",
+    "vatRate": "VAT {{rate}}%",
+    "total": "Total",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes for the quote...",
+    "pdfLanguage": "PDF Language:",
+    "languageSv": "Svenska",
+    "languageEn": "English",
+    "saveDraft": "Save as Draft",
+    "saving": "Saving...",
+    "saveQuote": "Save Quote",
+    "createPdf": "Create & Download PDF",
+    "updatePdf": "Update & Download PDF",
+    "noProfile": "Set up your profile first to include your business details on the PDF."
+  },
+  "lineItem": {
+    "textPlaceholder": "Text / comment...",
+    "descriptionPlaceholder": "Article description",
+    "billing": {
+      "oneTime": "One-time",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "halfYear": "Half-year"
+    }
+  },
+  "profitability": {
+    "title": "Profitability (internal)",
+    "estimatedHours": "Estimated hours",
+    "costs": "Costs",
+    "costLabelPlaceholder": "Cost label (e.g. Hosting)",
+    "addCost": "Add cost",
+    "totalCosts": "Total Costs",
+    "revenue": "Revenue",
+    "profit": "Profit",
+    "perHour": "Per Hour",
+    "mrr": "MRR"
+  }
+}

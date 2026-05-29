@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { PageContainer } from "@/components/layout/page-container";
 import {
   useCompanyProfile,
@@ -7,6 +8,7 @@ import {
 } from "@/features/profile/hooks/use-profile";
 import type { CompanyProfile } from "@crm/shared";
 import { useIsAdmin, signOut } from "@/lib/auth";
+import { currentLocale } from "@/i18n";
 
 export const Route = createFileRoute("/profile/")({
   component: ProfilePage,
@@ -15,12 +17,12 @@ export const Route = createFileRoute("/profile/")({
 // ─── Display formatters ───────────────────────────────────────────────────────
 
 const fmtNumber = (v: number | "") =>
-  v === "" ? "" : new Intl.NumberFormat("sv-SE").format(v) + " kr";
+  v === "" ? "" : new Intl.NumberFormat(currentLocale()).format(v) + " kr";
 
 const fmtDate = (v: string) => {
   if (!v) return "";
   try {
-    return new Intl.DateTimeFormat("sv-SE", { dateStyle: "long" }).format(
+    return new Intl.DateTimeFormat(currentLocale(), { dateStyle: "long" }).format(
       new Date(v)
     );
   } catch {
@@ -60,8 +62,10 @@ function InlineField({
   const [localValue, setLocalValue] = useState<string | number | "">(value);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-  // Sync external changes (e.g. real-time Firestore updates)
+  // Sync external changes (e.g. real-time Firestore updates) into local state
+  // while not editing. Intentional external→local sync.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!editing) setLocalValue(value);
   }, [value, editing]);
 
@@ -201,6 +205,7 @@ function LogoUpload({
   editable: boolean;
   onUpload: (file: File) => Promise<void>;
 }) {
+  const { t } = useTranslation("profile");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -220,7 +225,7 @@ function LogoUpload({
     try {
       await onUpload(file);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : t("logo.uploadFailed"));
       setPreview(currentUrl); // revert preview on failure
     } finally {
       setUploading(false);
@@ -231,17 +236,17 @@ function LogoUpload({
 
   return (
     <div className="py-3 border-b border-border/50 last:border-0">
-      <p className="text-xs font-medium text-muted-foreground mb-2">Logo (used in invoices & quotes)</p>
+      <p className="text-xs font-medium text-muted-foreground mb-2">{t("logo.label")}</p>
       <div className="flex items-center gap-4">
         {preview ? (
           <img
             src={preview}
-            alt="Company logo"
+            alt={t("logo.alt")}
             className="h-12 max-w-[140px] object-contain rounded border border-border bg-muted/20 p-1"
           />
         ) : (
           <div className="h-12 w-24 rounded border border-dashed border-border bg-muted/20 flex items-center justify-center">
-            <span className="text-xs text-muted-foreground">No logo</span>
+            <span className="text-xs text-muted-foreground">{t("logo.none")}</span>
           </div>
         )}
         {editable && (
@@ -252,7 +257,7 @@ function LogoUpload({
               disabled={uploading}
               className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
             >
-              {uploading ? "Uploading…" : preview ? "Replace" : "Upload"}
+              {uploading ? t("logo.uploading") : preview ? t("logo.replace") : t("logo.upload")}
             </button>
             <input
               ref={fileRef}
@@ -282,9 +287,11 @@ function FSkattRow({
   editable: boolean;
   onSave: (v: boolean) => void;
 }) {
+  const { t } = useTranslation("profile");
+  const statusLabel = value ? t("fSkatt.registered") : t("fSkatt.notRegistered");
   return (
     <div className="py-3 border-b border-border/50 last:border-0">
-      <p className="text-xs font-medium text-muted-foreground mb-0.5">F-skatt</p>
+      <p className="text-xs font-medium text-muted-foreground mb-0.5">{t("fSkatt.label")}</p>
       {editable ? (
         <label className="flex items-center gap-2 cursor-pointer w-fit">
           <input
@@ -293,14 +300,10 @@ function FSkattRow({
             onChange={(e) => onSave(e.target.checked)}
             className="h-4 w-4 rounded border-border accent-primary"
           />
-          <span className="text-sm text-foreground">
-            {value ? "Registrerad" : "Ej registrerad"}
-          </span>
+          <span className="text-sm text-foreground">{statusLabel}</span>
         </label>
       ) : (
-        <p className="text-sm text-foreground">
-          {value ? "Registrerad" : "Ej registrerad"}
-        </p>
+        <p className="text-sm text-foreground">{statusLabel}</p>
       )}
     </div>
   );
@@ -367,11 +370,15 @@ function profileToForm(profile: CompanyProfile | null): CompanyProfileFormData {
 // ─── ProfilePage ──────────────────────────────────────────────────────────────
 
 function ProfilePage() {
+  const { t } = useTranslation("profile");
   const { profile, loading, saveProfile, uploadLogo } = useCompanyProfile();
   const isAdmin = useIsAdmin();
   const [form, setForm] = useState<CompanyProfileFormData>(INITIAL_FORM);
 
+  // Populate the form once the profile loads from Firestore. Intentional
+  // external→local sync.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (profile) setForm(profileToForm(profile));
   }, [profile]);
 
@@ -386,82 +393,82 @@ function ProfilePage() {
 
   if (loading) {
     return (
-      <PageContainer title="Company Profile">
-        <p className="text-sm text-muted-foreground">Loading...</p>
+      <PageContainer title={t("page.title")}>
+        <p className="text-sm text-muted-foreground">{t("states.loading")}</p>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer
-      title="Company Profile"
-      description="Company details for invoices and quotes"
+      title={t("page.title")}
+      description={t("page.description")}
     >
       <div className="max-w-xl">
-        <Section title="Företagsinformation">
+        <Section title={t("sections.companyInfo")}>
           <LogoUpload
             currentUrl={profile?.logoUrl}
             editable={isAdmin}
             onUpload={(file) => uploadLogo(file).then(() => {})}
           />
           <InlineField
-            label="Juridiskt namn"
+            label={t("fields.legalName.label")}
             value={form.legalName}
             editable={isAdmin}
             onSave={(v) => handleFieldSave("legalName", v)}
-            placeholder="Mitt AB"
+            placeholder={t("fields.legalName.placeholder")}
           />
           <InlineField
-            label="Organisationsnummer"
+            label={t("fields.orgNumber.label")}
             value={form.orgNumber}
             editable={isAdmin}
             onSave={(v) => handleFieldSave("orgNumber", v)}
-            placeholder="556677-8899"
+            placeholder={t("fields.orgNumber.placeholder")}
           />
           <InlineField
-            label="Bank"
+            label={t("fields.bank.label")}
             value={form.bank}
             editable={isAdmin}
             onSave={(v) => handleFieldSave("bank", v)}
-            placeholder="Swedbank"
+            placeholder={t("fields.bank.placeholder")}
           />
           <InlineField
-            label="Bankgiro"
+            label={t("fields.bankgiro.label")}
             value={form.bankgiro}
             editable={isAdmin}
             onSave={(v) => handleFieldSave("bankgiro", v)}
-            placeholder="123-4567"
+            placeholder={t("fields.bankgiro.placeholder")}
           />
           <InlineField
-            label="Adress"
+            label={t("fields.address.label")}
             value={form.address}
             editable={isAdmin}
             onSave={(v) => handleFieldSave("address", v)}
-            placeholder="Storgatan 1, 111 22 Stockholm"
+            placeholder={t("fields.address.placeholder")}
           />
           <InlineField
-            label="Telefon"
+            label={t("fields.phone.label")}
             value={form.phone}
             type="tel"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("phone", v)}
-            placeholder="+46 70 123 45 67"
+            placeholder={t("fields.phone.placeholder")}
           />
           <InlineField
-            label="E-post"
+            label={t("fields.email.label")}
             value={form.email}
             type="email"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("email", v)}
-            placeholder="info@example.se"
+            placeholder={t("fields.email.placeholder")}
           />
           <InlineField
-            label="Webbplats"
+            label={t("fields.website.label")}
             value={form.website}
             type="url"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("website", v)}
-            placeholder="https://example.se"
+            placeholder={t("fields.website.placeholder")}
           />
           <FSkattRow
             value={form.fSkatt}
@@ -470,27 +477,27 @@ function ProfilePage() {
           />
         </Section>
 
-        <Section title="Mål">
+        <Section title={t("sections.goals")}>
           <InlineField
-            label="Inkomstmål (SEK/år)"
+            label={t("fields.incomeGoal.label")}
             value={form.incomeGoal}
             type="number"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("incomeGoal", v)}
-            placeholder="600000"
+            placeholder={t("fields.incomeGoal.placeholder")}
             format={(v) => fmtNumber(v as number)}
           />
           <InlineField
-            label="MRR-mål (SEK/mån)"
+            label={t("fields.mrrGoal.label")}
             value={form.mrrGoal}
             type="number"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("mrrGoal", v)}
-            placeholder="60000"
+            placeholder={t("fields.mrrGoal.placeholder")}
             format={(v) => fmtNumber(v as number)}
           />
           <InlineField
-            label="Deadline"
+            label={t("fields.goalDeadline.label")}
             value={form.goalDeadline}
             type="date"
             editable={isAdmin}
@@ -498,12 +505,12 @@ function ProfilePage() {
             format={(v) => fmtDate(String(v))}
           />
           <InlineField
-            label="Hur når vi målet?"
+            label={t("fields.goalDescription.label")}
             value={form.goalDescription}
             type="textarea"
             editable={isAdmin}
             onSave={(v) => handleFieldSave("goalDescription", v)}
-            placeholder="Fokusera på att konvertera varma leads..."
+            placeholder={t("fields.goalDescription.placeholder")}
           />
         </Section>
 
@@ -512,7 +519,7 @@ function ProfilePage() {
           onClick={() => signOut()}
           className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 transition-colors"
         >
-          Logga ut
+          {t("logout")}
         </button>
       </div>
     </PageContainer>

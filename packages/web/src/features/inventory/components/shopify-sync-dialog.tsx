@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { usePartner } from "@/lib/partner";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "@/lib/firebase";
-import { X, RefreshCw, CheckCircle, AlertCircle, Settings } from "lucide-react";
+import { useIsSuperAdmin } from "@/lib/auth";
+import { X, RefreshCw, CheckCircle, AlertCircle, Settings, Webhook } from "lucide-react";
 
 interface SyncResult {
   totalProducts: number;
@@ -18,8 +20,10 @@ interface ShopifySyncDialogProps {
 }
 
 export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialogProps) {
+  const { t } = useTranslation("inventory");
   const { partnerId: contextPartnerId } = usePartner();
   const partnerId = targetPartnerId ?? contextPartnerId;
+  const isSuperAdmin = useIsSuperAdmin();
 
   const [tab, setTab] = useState<"sync" | "settings">("sync");
   const [config, setConfig] = useState<{
@@ -41,6 +45,12 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
+  const [forceStockOverwrite, setForceStockOverwrite] = useState(false);
+
+  // Register webhooks state
+  const [registeringWebhooks, setRegisteringWebhooks] = useState(false);
+  const [webhookResult, setWebhookResult] = useState<{ created: number; updated: number } | null>(null);
+  const [webhookError, setWebhookError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadConfig() {
@@ -91,6 +101,26 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
     }
   }
 
+  async function handleRegisterWebhooks() {
+    setRegisteringWebhooks(true);
+    setWebhookResult(null);
+    setWebhookError(null);
+
+    try {
+      const functions = getFunctions(app, "europe-west1");
+      const registerFn = httpsCallable<{ partnerId: string }, { created: number; updated: number }>(
+        functions,
+        "registerShopifyWebhooks"
+      );
+      const result = await registerFn({ partnerId });
+      setWebhookResult(result.data);
+    } catch (err) {
+      setWebhookError(err instanceof Error ? err.message : t("shopifySync.webhookFailed"));
+    } finally {
+      setRegisteringWebhooks(false);
+    }
+  }
+
   async function handleSync() {
     setSyncing(true);
     setSyncResult(null);
@@ -98,15 +128,15 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
 
     try {
       const functions = getFunctions(app, "europe-west1");
-      const syncFn = httpsCallable<{ partnerId: string }, SyncResult>(
-        functions,
-        "syncShopifyProducts"
-      );
-      const result = await syncFn({ partnerId });
+      const syncFn = httpsCallable<
+        { partnerId: string; forceStockOverwrite?: boolean },
+        SyncResult
+      >(functions, "syncShopifyProducts");
+      const result = await syncFn({ partnerId, forceStockOverwrite });
       setSyncResult(result.data);
     } catch (err) {
       setSyncError(
-        err instanceof Error ? err.message : "Synchronization failed"
+        err instanceof Error ? err.message : t("shopifySync.syncFailed")
       );
     } finally {
       setSyncing(false);
@@ -118,7 +148,7 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
       <div className="relative w-full max-w-lg rounded-xl border border-border bg-background shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <h2 className="text-lg font-semibold">Shopify Integration</h2>
+          <h2 className="text-lg font-semibold">{t("shopifySync.title")}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -139,7 +169,7 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Sync
+            {t("shopifySync.tabSync")}
           </button>
           <button
             type="button"
@@ -151,7 +181,7 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
             }`}
           >
             <Settings className="h-3.5 w-3.5" />
-            Settings
+            {t("shopifySync.tabSettings")}
           </button>
         </div>
 
@@ -159,19 +189,19 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
           {tab === "sync" ? (
             <div className="space-y-4">
               {loadingConfig ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
+                <p className="text-sm text-muted-foreground">{t("shopifySync.loading")}</p>
               ) : !config ? (
                 <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
-                  <p className="font-medium">Shopify not configured</p>
+                  <p className="font-medium">{t("shopifySync.notConfigured")}</p>
                   <p className="mt-1 text-orange-600">
-                    Go to the Settings tab and enter your Shopify API credentials.
+                    {t("shopifySync.notConfiguredHelp")}
                   </p>
                   <button
                     type="button"
                     onClick={() => setTab("settings")}
                     className="mt-2 text-orange-700 underline hover:no-underline"
                   >
-                    Open settings
+                    {t("shopifySync.openSettings")}
                   </button>
                 </div>
               ) : (
@@ -180,27 +210,40 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                   <div className="flex items-center gap-2 rounded-md bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-700">
                     <CheckCircle className="h-4 w-4 shrink-0" />
                     <span>
-                      Connected to{" "}
+                      {t("shopifySync.connectedTo")}{" "}
                       <span className="font-medium">{config.storeUrl}</span>
                     </span>
                   </div>
 
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">
-                      Imports all products and variants from Shopify.
-                      Existing products are updated, their stock is preserved.
-                      Images are copied to Firebase Storage.
+                      {t("shopifySync.syncDescription")}
                     </p>
+
+                    <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm cursor-pointer hover:bg-muted/50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={forceStockOverwrite}
+                        onChange={(e) => setForceStockOverwrite(e.target.checked)}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="font-medium">{t("shopifySync.overwriteStock")}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {t("shopifySync.overwriteStockHelp")}
+                        </span>
+                      </span>
+                    </label>
 
                     {syncResult && (
                       <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-                        <p className="font-medium">Sync complete!</p>
+                        <p className="font-medium">{t("shopifySync.syncComplete")}</p>
                         <ul className="mt-1 space-y-0.5 text-green-600">
                           <li>
-                            Total products: {syncResult.totalProducts}
+                            {t("shopifySync.totalProducts", { value: syncResult.totalProducts })}
                           </li>
-                          <li>New: {syncResult.created}</li>
-                          <li>Updated: {syncResult.synced}</li>
+                          <li>{t("shopifySync.new", { value: syncResult.created })}</li>
+                          <li>{t("shopifySync.updated", { value: syncResult.synced })}</li>
                         </ul>
                       </div>
                     )}
@@ -213,13 +256,45 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                     )}
                   </div>
 
+                  {isSuperAdmin && (
+                    <div className="space-y-2 border-t border-border pt-4">
+                      <p className="text-sm font-medium">{t("shopifySync.webhookRegistration")}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("shopifySync.webhookHelp")}
+                      </p>
+                      {webhookResult && (
+                        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                          <p className="font-medium">{t("shopifySync.webhooksRegistered")}</p>
+                          <p className="text-green-600">{t("shopifySync.webhookResult", { created: webhookResult.created, updated: webhookResult.updated })}</p>
+                        </div>
+                      )}
+                      {webhookError && (
+                        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                          <p>{webhookError}</p>
+                        </div>
+                      )}
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleRegisterWebhooks}
+                          disabled={registeringWebhooks}
+                          className="flex items-center gap-1.5 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50"
+                        >
+                          <Webhook className={`h-4 w-4 ${registeringWebhooks ? "animate-pulse" : ""}`} />
+                          {registeringWebhooks ? t("shopifySync.registeringWebhooks") : t("shopifySync.registerWebhooks")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-2 pt-2">
                     <button
                       type="button"
                       onClick={onClose}
                       className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
                     >
-                      Close
+                      {t("shopifySync.close")}
                     </button>
                     <button
                       type="button"
@@ -230,7 +305,7 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                       <RefreshCw
                         className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`}
                       />
-                      {syncing ? "Syncing..." : "Start sync"}
+                      {syncing ? t("shopifySync.syncing") : t("shopifySync.startSync")}
                     </button>
                   </div>
                 </>
@@ -240,47 +315,47 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
             <form onSubmit={handleSaveConfig} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
-                  Store URL
+                  {t("shopifySync.storeUrl")}
                 </label>
                 <input
                   type="text"
                   value={storeUrl}
                   onChange={(e) => setStoreUrl(e.target.value)}
-                  placeholder="your-store.myshopify.com"
+                  placeholder={t("shopifySync.storeUrlPlaceholder")}
                   required
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Without https:// — e.g. hemdeal.myshopify.com
+                  {t("shopifySync.storeUrlHelp")}
                 </p>
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
-                  Admin API Access Token
+                  {t("shopifySync.accessToken")}
                 </label>
                 <input
                   type="password"
                   value={accessToken}
                   onChange={(e) => setAccessToken(e.target.value)}
-                  placeholder={config ? "Leave empty to keep existing" : "shpat_..."}
+                  placeholder={config ? t("shopifySync.keepExisting") : "shpat_..."}
                   required={!config}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Get from Shopify Admin → Settings → Apps → Develop apps
+                  {t("shopifySync.accessTokenHelp")}
                 </p>
               </div>
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
-                  Webhook Signing Secret
+                  {t("shopifySync.webhookSecret")}
                 </label>
                 <input
                   type="password"
                   value={webhookSecret}
                   onChange={(e) => setWebhookSecret(e.target.value)}
-                  placeholder={config ? "Leave empty to keep existing" : "Webhook secret..."}
+                  placeholder={config ? t("shopifySync.keepExisting") : t("shopifySync.webhookSecretPlaceholder")}
                   required={!config}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                 />
@@ -292,7 +367,7 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                   onClick={onClose}
                   className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
                 >
-                  Cancel
+                  {t("shopifySync.cancel")}
                 </button>
                 <button
                   type="submit"
@@ -300,10 +375,10 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                   className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {savingConfig
-                    ? "Saving..."
+                    ? t("shopifySync.savingConfig")
                     : configSaved
-                      ? "Saved!"
-                      : "Save & connect"}
+                      ? t("shopifySync.savedConfig")
+                      : t("shopifySync.saveConnect")}
                 </button>
               </div>
             </form>

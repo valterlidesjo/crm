@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
 import { Trash2, GripVertical } from "lucide-react";
+import { currentLocale } from "@/i18n";
 import { calcLineTotal, calcLineVat } from "../utils/calculations";
 import type { InvoiceLineData } from "../utils/calculations";
 import type { VatRateType } from "@crm/shared";
@@ -20,7 +22,7 @@ interface InvoiceLineItemProps {
   item: InvoiceLineData;
   index: number;
   onChange: (index: number, field: keyof InvoiceLineData, value: string | number) => void;
-  onSelectProduct: (index: number, data: Pick<InvoiceLineData, "description" | "unitPrice" | "productId" | "variantId" | "sku">) => void;
+  onSelectProduct: (index: number, data: Pick<InvoiceLineData, "description" | "unitPrice" | "productId" | "sku">) => void;
   onRemove: (index: number) => void;
   currency: string;
   suggestions: ProductSuggestion[];
@@ -45,6 +47,7 @@ export function InvoiceLineItem({
   onDrop,
   onDragEnd,
 }: InvoiceLineItemProps) {
+  const { t } = useTranslation("invoices");
   const isText = item.type === "text";
   const lineTotal = isText ? 0 : calcLineTotal(item.quantity, item.unitPrice);
   const lineVat = isText ? 0 : calcLineVat(item.quantity, item.unitPrice, item.vatRate);
@@ -96,7 +99,6 @@ export function InvoiceLineItem({
       description: s.description,
       unitPrice: s.unitPrice,
       productId: s.productId,
-      variantId: s.variantId,
       sku: s.sku,
     });
     setOpen(false);
@@ -127,7 +129,7 @@ export function InvoiceLineItem({
                   )}
                 </span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">
-                  {s.unitPrice.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+                  {s.unitPrice.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
                 </span>
               </button>
             ))}
@@ -156,7 +158,7 @@ export function InvoiceLineItem({
             className={INPUT_CLASS + " italic text-muted-foreground"}
             value={item.description}
             onChange={(e) => onChange(index, "description", e.target.value)}
-            placeholder="Text / comment..."
+            placeholder={t("lineItem.textPlaceholder")}
           />
         </td>
       ) : (
@@ -167,7 +169,7 @@ export function InvoiceLineItem({
               className={INPUT_CLASS}
               value={item.description}
               onChange={(e) => onChange(index, "description", e.target.value)}
-              placeholder="Article description"
+              placeholder={t("lineItem.descriptionPlaceholder")}
               onFocus={() => setOpen(true)}
               onBlur={() => setTimeout(() => setOpen(false), 120)}
             />
@@ -211,10 +213,10 @@ export function InvoiceLineItem({
             </select>
           </td>
           <td className="py-2 px-2 text-right text-sm tabular-nums whitespace-nowrap">
-            {lineTotal.toLocaleString("sv-SE", { minimumFractionDigits: 2 })} {currency}
+            {lineTotal.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })} {currency}
           </td>
           <td className="py-2 px-2 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
-            {lineVat.toLocaleString("sv-SE", { minimumFractionDigits: 2 })}
+            {lineVat.toLocaleString(currentLocale(), { minimumFractionDigits: 2 })}
           </td>
         </>
       )}

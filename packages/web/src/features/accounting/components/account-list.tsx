@@ -1,18 +1,12 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { BAS_ACCOUNTS } from "@crm/shared";
 
-const ACCOUNT_CLASS_NAMES: Record<number, string> = {
-  1: "Assets",
-  2: "Equity & liabilities",
-  3: "Revenue",
-  4: "Materials & goods",
-  5: "Premises costs etc.",
-  6: "Other external costs",
-  7: "Personnel",
-  8: "Financial items & tax",
-};
+const ACCOUNT_CLASSES = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 export function AccountList() {
+  const { t } = useTranslation("accounting");
+  const className = (cls: number) => t(`accounts.classNames.${cls}`);
   const [search, setSearch] = useState("");
   const [filterClass, setFilterClass] = useState<number | null>(null);
 
@@ -46,7 +40,7 @@ export function AccountList() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search account number or name..."
+          placeholder={t("accounts.searchPlaceholder")}
           className="w-64 rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
         <select
@@ -56,10 +50,10 @@ export function AccountList() {
           }
           className="rounded-md border border-border bg-background px-3 py-2 text-sm"
         >
-          <option value="">All account classes</option>
-          {Object.entries(ACCOUNT_CLASS_NAMES).map(([cls, name]) => (
+          <option value="">{t("accounts.allClasses")}</option>
+          {ACCOUNT_CLASSES.map((cls) => (
             <option key={cls} value={cls}>
-              {cls} — {name}
+              {cls} — {className(cls)}
             </option>
           ))}
         </select>
@@ -70,14 +64,17 @@ export function AccountList() {
         .map(([cls, accounts]) => (
           <div key={cls}>
             <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-              Class {cls} — {ACCOUNT_CLASS_NAMES[Number(cls)]}
+              {t("accounts.classHeading", {
+                class: cls,
+                name: className(Number(cls)),
+              })}
             </h3>
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr className="text-sm font-medium">
-                    <th className="px-3 py-2 text-left">Account</th>
-                    <th className="px-3 py-2 text-left">Name</th>
+                    <th className="px-3 py-2 text-left">{t("accounts.columnAccount")}</th>
+                    <th className="px-3 py-2 text-left">{t("accounts.columnName")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -99,7 +96,7 @@ export function AccountList() {
         ))}
 
       {filtered.length === 0 && (
-        <p className="text-center text-muted-foreground">No accounts match the search.</p>
+        <p className="text-center text-muted-foreground">{t("accounts.noMatches")}</p>
       )}
     </div>
   );

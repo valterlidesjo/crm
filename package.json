@@ -12,7 +12,10 @@
     "dev": "npm run dev -w @crm/web",
     "build": "npm run build -w @crm/shared && npm run build -w @crm/web",
     "lint": "npm run lint -w @crm/web",
-    "migrate:allowed-emails": "node scripts/migrate-allowed-emails.mjs"
+    "migrate:allowed-emails": "node scripts/migrate-allowed-emails.mjs",
+    "migrate:split-variants": "node scripts/migrate-split-variants.mjs",
+    "sync:skus": "node scripts/sync-skus.mjs",
+    "sync:cdon": "node scripts/sync-cdon.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

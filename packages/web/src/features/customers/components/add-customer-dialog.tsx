@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ interface AddCustomerDialogProps {
 const SHARED_FIELDS = ["name", "location", "phone", "email"] as const;
 
 export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerDialogProps) {
+  const { t } = useTranslation("customers");
   const [customer, setCustomer] = useState<CustomerFormData>(INITIAL_CUSTOMER);
   const [user, setUser] = useState<UserFormData>(INITIAL_USER);
   const [useSameInfo, setUseSameInfo] = useState(true);
@@ -80,8 +82,8 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Customer</DialogTitle>
-          <DialogDescription>Add a new customer and their contact person.</DialogDescription>
+          <DialogTitle>{t("add.title")}</DialogTitle>
+          <DialogDescription>{t("add.description")}</DialogDescription>
         </DialogHeader>
 
         {/* Type toggle */}
@@ -96,7 +98,7 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
                 : "border-border bg-background text-muted-foreground hover:bg-muted"
             )}
           >
-            Business
+            {t("type.business")}
           </button>
           <button
             type="button"
@@ -108,7 +110,7 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
                 : "border-border bg-background text-muted-foreground hover:bg-muted"
             )}
           >
-            Private Person
+            {t("type.private")}
           </button>
         </div>
 
@@ -116,77 +118,77 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
           {isPrivate ? (
             <div>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Personal Details
+                {t("sections.personalDetails")}
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="First Name" required>
+                <Field label={t("fields.firstName")} required>
                   <input
                     type="text"
                     value={customer.firstName}
                     onChange={(e) => handleCustomerChange("firstName", e.target.value)}
                     className={INPUT_CLASS}
                     required
-                    placeholder="First name"
+                    placeholder={t("placeholders.firstName")}
                   />
                 </Field>
-                <Field label="Last Name" required>
+                <Field label={t("fields.lastName")} required>
                   <input
                     type="text"
                     value={customer.lastName}
                     onChange={(e) => handleCustomerChange("lastName", e.target.value)}
                     className={INPUT_CLASS}
                     required
-                    placeholder="Last name"
+                    placeholder={t("placeholders.lastName")}
                   />
                 </Field>
-                <Field label="Email" required>
+                <Field label={t("fields.email")} required>
                   <input
                     type="email"
                     value={customer.email}
                     onChange={(e) => handleCustomerChange("email", e.target.value)}
                     className={INPUT_CLASS}
                     required
-                    placeholder="person@example.com"
+                    placeholder={t("placeholders.personEmail")}
                   />
                 </Field>
-                <Field label="Phone" required>
+                <Field label={t("fields.phone")} required>
                   <input
                     type="tel"
                     value={customer.phone}
                     onChange={(e) => handleCustomerChange("phone", e.target.value)}
                     className={INPUT_CLASS}
                     required
-                    placeholder="+46 70 123 4567"
+                    placeholder={t("placeholders.phone")}
                   />
                 </Field>
-                <Field label="Location" required>
+                <Field label={t("fields.location")} required>
                   <input
                     type="text"
                     value={customer.location}
                     onChange={(e) => handleCustomerChange("location", e.target.value)}
                     className={INPUT_CLASS}
                     required
-                    placeholder="Stockholm"
+                    placeholder={t("placeholders.stockholm")}
                   />
                 </Field>
-                <Field label="Personal Number (optional)">
+                <Field label={t("fields.personalNumber")}>
                   <input
                     type="text"
                     value={customer.personalNumber}
                     onChange={(e) => handleCustomerChange("personalNumber", e.target.value)}
                     className={INPUT_CLASS}
-                    placeholder="YYYYMMDD-XXXX"
+                    placeholder={t("placeholders.personalNumber")}
                   />
                 </Field>
-                <Field label="Status" required>
+                <Field label={t("fields.status")} required>
                   <select
                     value={customer.status}
                     onChange={(e) => handleCustomerChange("status", e.target.value)}
                     className={INPUT_CLASS}
                     required
                   >
-                    {STATUS_OPTIONS.map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                    {STATUS_OPTIONS.map((value) => (
+                      <option key={value} value={value}>{t(`status.${value}`)}</option>
                     ))}
                   </select>
                 </Field>
@@ -195,42 +197,42 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
           ) : (
             <div>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Company Information
+                {t("sections.companyInformation")}
               </h3>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Name" required>
-                  <input type="text" value={customer.name} onChange={(e) => handleCustomerChange("name", e.target.value)} className={INPUT_CLASS} required placeholder="Company name" />
+                <Field label={t("fields.name")} required>
+                  <input type="text" value={customer.name} onChange={(e) => handleCustomerChange("name", e.target.value)} className={INPUT_CLASS} required placeholder={t("placeholders.companyName")} />
                 </Field>
-                <Field label="Location" required>
-                  <input type="text" value={customer.location} onChange={(e) => handleCustomerChange("location", e.target.value)} className={INPUT_CLASS} required placeholder="City, Country" />
+                <Field label={t("fields.location")} required>
+                  <input type="text" value={customer.location} onChange={(e) => handleCustomerChange("location", e.target.value)} className={INPUT_CLASS} required placeholder={t("placeholders.cityCountry")} />
                 </Field>
-                <Field label="Phone" required>
-                  <input type="tel" value={customer.phone} onChange={(e) => handleCustomerChange("phone", e.target.value)} className={INPUT_CLASS} required placeholder="+46 70 123 4567" />
+                <Field label={t("fields.phone")} required>
+                  <input type="tel" value={customer.phone} onChange={(e) => handleCustomerChange("phone", e.target.value)} className={INPUT_CLASS} required placeholder={t("placeholders.phone")} />
                 </Field>
-                <Field label="Email" required>
-                  <input type="email" value={customer.email} onChange={(e) => handleCustomerChange("email", e.target.value)} className={INPUT_CLASS} required placeholder="contact@company.com" />
+                <Field label={t("fields.email")} required>
+                  <input type="email" value={customer.email} onChange={(e) => handleCustomerChange("email", e.target.value)} className={INPUT_CLASS} required placeholder={t("placeholders.companyEmail")} />
                 </Field>
-                <Field label="Status" required>
+                <Field label={t("fields.status")} required>
                   <select value={customer.status} onChange={(e) => handleCustomerChange("status", e.target.value)} className={INPUT_CLASS} required>
-                    {STATUS_OPTIONS.map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                    {STATUS_OPTIONS.map((value) => (
+                      <option key={value} value={value}>{t(`status.${value}`)}</option>
                     ))}
                   </select>
                 </Field>
-                <Field label="Category of Work" required>
-                  <input type="text" value={customer.categoryOfWork} onChange={(e) => handleCustomerChange("categoryOfWork", e.target.value)} className={INPUT_CLASS} required placeholder="e.g. IT, Construction, Retail" />
+                <Field label={t("fields.categoryOfWork")} required>
+                  <input type="text" value={customer.categoryOfWork} onChange={(e) => handleCustomerChange("categoryOfWork", e.target.value)} className={INPUT_CLASS} required placeholder={t("placeholders.categoryOfWork")} />
                 </Field>
-                <Field label="Description" className="sm:col-span-2">
-                  <textarea value={customer.description} onChange={(e) => handleCustomerChange("description", e.target.value)} className={cn(INPUT_CLASS, "min-h-[60px] resize-y")} placeholder="Brief description of the customer..." rows={2} />
+                <Field label={t("fields.description")} className="sm:col-span-2">
+                  <textarea value={customer.description} onChange={(e) => handleCustomerChange("description", e.target.value)} className={cn(INPUT_CLASS, "min-h-[60px] resize-y")} placeholder={t("placeholders.description")} rows={2} />
                 </Field>
-                <Field label="Website">
-                  <input type="url" value={customer.website} onChange={(e) => handleCustomerChange("website", e.target.value)} className={INPUT_CLASS} placeholder="https://example.com" />
+                <Field label={t("fields.website")}>
+                  <input type="url" value={customer.website} onChange={(e) => handleCustomerChange("website", e.target.value)} className={INPUT_CLASS} placeholder={t("placeholders.website")} />
                 </Field>
-                <Field label="Org Nr">
-                  <input type="text" value={customer.orgNumber} onChange={(e) => handleCustomerChange("orgNumber", e.target.value)} className={INPUT_CLASS} placeholder="556677-8899" />
+                <Field label={t("fields.orgNumber")}>
+                  <input type="text" value={customer.orgNumber} onChange={(e) => handleCustomerChange("orgNumber", e.target.value)} className={INPUT_CLASS} placeholder={t("placeholders.orgNumber")} />
                 </Field>
-                <Field label="Legal Name">
-                  <input type="text" value={customer.legalName} onChange={(e) => handleCustomerChange("legalName", e.target.value)} className={INPUT_CLASS} placeholder="Full legal entity name" />
+                <Field label={t("fields.legalName")}>
+                  <input type="text" value={customer.legalName} onChange={(e) => handleCustomerChange("legalName", e.target.value)} className={INPUT_CLASS} placeholder={t("placeholders.legalName")} />
                 </Field>
               </div>
             </div>
@@ -243,31 +245,31 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Contact Person
+                    {t("sections.contactPerson")}
                   </h3>
                   <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
                     <Checkbox checked={useSameInfo} onCheckedChange={(checked) => handleUseSameInfo(checked === true)} />
-                    Use same name & contact info
+                    {t("add.useSameInfo")}
                   </label>
                 </div>
 
                 {useSameInfo ? (
                   <p className="text-sm text-muted-foreground">
-                    Contact person will use the same name, location, phone, and email as the customer.
+                    {t("add.sameInfoNote")}
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Name" required>
-                      <input type="text" value={user.name} onChange={(e) => setUser((p) => ({ ...p, name: e.target.value }))} className={INPUT_CLASS} required placeholder="Contact name" />
+                    <Field label={t("fields.name")} required>
+                      <input type="text" value={user.name} onChange={(e) => setUser((p) => ({ ...p, name: e.target.value }))} className={INPUT_CLASS} required placeholder={t("placeholders.contactName")} />
                     </Field>
-                    <Field label="Location" required>
-                      <input type="text" value={user.location} onChange={(e) => setUser((p) => ({ ...p, location: e.target.value }))} className={INPUT_CLASS} required placeholder="City, Country" />
+                    <Field label={t("fields.location")} required>
+                      <input type="text" value={user.location} onChange={(e) => setUser((p) => ({ ...p, location: e.target.value }))} className={INPUT_CLASS} required placeholder={t("placeholders.cityCountry")} />
                     </Field>
-                    <Field label="Phone" required>
-                      <input type="tel" value={user.phone} onChange={(e) => setUser((p) => ({ ...p, phone: e.target.value }))} className={INPUT_CLASS} required placeholder="+46 70 123 4567" />
+                    <Field label={t("fields.phone")} required>
+                      <input type="tel" value={user.phone} onChange={(e) => setUser((p) => ({ ...p, phone: e.target.value }))} className={INPUT_CLASS} required placeholder={t("placeholders.phone")} />
                     </Field>
-                    <Field label="Email" required>
-                      <input type="email" value={user.email} onChange={(e) => setUser((p) => ({ ...p, email: e.target.value }))} className={INPUT_CLASS} required placeholder="person@company.com" />
+                    <Field label={t("fields.email")} required>
+                      <input type="email" value={user.email} onChange={(e) => setUser((p) => ({ ...p, email: e.target.value }))} className={INPUT_CLASS} required placeholder={t("placeholders.contactEmail")} />
                     </Field>
                   </div>
                 )}
@@ -277,10 +279,10 @@ export function AddCustomerDialog({ open, onOpenChange, onSubmit }: AddCustomerD
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => onOpenChange(false)} className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors">
-              Cancel
+              {t("actions.cancel")}
             </button>
             <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-              Add Customer
+              {t("add.submit")}
             </button>
           </div>
         </form>

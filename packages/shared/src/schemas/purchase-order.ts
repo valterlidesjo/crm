@@ -36,9 +36,11 @@ export type PurchaseOrderStatus = typeof PurchaseOrderStatus.Type;
  */
 export const PurchaseOrderItem = Schema.Struct({
   productId: Schema.String,
-  variantId: Schema.String,
+  /** Legacy — articles are now standalone products. Kept optional for old POs. */
+  variantId: Schema.optional(Schema.String),
   productTitle: Schema.String,
-  variantTitle: Schema.String,
+  /** Legacy — kept optional for old POs created before the variant split. */
+  variantTitle: Schema.optional(Schema.String),
   quantity: Schema.Number,
   unitPriceInCurrency: Schema.Number,
   currency: Currency,

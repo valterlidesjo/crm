@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/superadmin/shopify")({
 });
 
 function SuperAdminShopifyPage() {
+  const { t } = useTranslation("partners");
   const { partners, loading } = usePartners();
   const [shopifyStatus, setShopifyStatus] = useState<Record<string, boolean>>({});
   const [managingPartnerId, setManagingPartnerId] = useState<string | null>(null);
@@ -29,13 +31,13 @@ function SuperAdminShopifyPage() {
   }, [partners]);
 
   return (
-    <PageContainer title="Shopify" description="Konfigurera och synka Shopify per partner">
+    <PageContainer title={t("shopify.title")} description={t("shopify.description")}>
       <div className="space-y-2">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Laddar partners...</p>
+          <p className="text-sm text-muted-foreground">{t("shopify.loading")}</p>
         ) : partners.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="text-sm text-muted-foreground">Inga partners hittades.</p>
+            <p className="text-sm text-muted-foreground">{t("shopify.empty")}</p>
           </div>
         ) : (
           partners.map((partner) => (
@@ -60,7 +62,7 @@ function SuperAdminShopifyPage() {
                 className="flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
-                Hantera
+                {t("shopify.manage")}
               </button>
             </div>
           ))

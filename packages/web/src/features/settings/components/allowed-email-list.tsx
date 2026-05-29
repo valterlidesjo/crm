@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { USER_ROLE_LABELS, type AllowedEmail, type UserRole } from "@crm/shared";
+import { useTranslation } from "react-i18next";
+import { type AllowedEmail, type UserRole } from "@crm/shared";
 import { Trash2 } from "lucide-react";
 
 interface AllowedEmailListProps {
@@ -9,11 +10,12 @@ interface AllowedEmailListProps {
 }
 
 export function AllowedEmailList({ emails, onRemove, onUpdateRole }: AllowedEmailListProps) {
+  const { t } = useTranslation("settings");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to remove this user?")) return;
+    if (!confirm(t("users.confirmRemove"))) return;
 
     setDeletingId(id);
     try {
@@ -35,7 +37,7 @@ export function AllowedEmailList({ emails, onRemove, onUpdateRole }: AllowedEmai
   if (emails.length === 0) {
     return (
       <div className="text-center py-12 border border-dashed border-border rounded-lg">
-        <p className="text-sm text-muted-foreground">No users found</p>
+        <p className="text-sm text-muted-foreground">{t("users.empty")}</p>
       </div>
     );
   }
@@ -45,10 +47,10 @@ export function AllowedEmailList({ emails, onRemove, onUpdateRole }: AllowedEmai
       <table className="w-full text-sm">
         <thead className="bg-muted">
           <tr>
-            <th className="text-left px-4 py-3 font-medium">Email</th>
-            <th className="text-left px-4 py-3 font-medium">Role</th>
-            <th className="text-left px-4 py-3 font-medium">Added By</th>
-            <th className="text-right px-4 py-3 font-medium">Actions</th>
+            <th className="text-left px-4 py-3 font-medium">{t("users.table.email")}</th>
+            <th className="text-left px-4 py-3 font-medium">{t("users.table.role")}</th>
+            <th className="text-left px-4 py-3 font-medium">{t("users.table.addedBy")}</th>
+            <th className="text-right px-4 py-3 font-medium">{t("users.table.actions")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -62,8 +64,8 @@ export function AllowedEmailList({ emails, onRemove, onUpdateRole }: AllowedEmai
                   disabled={updatingId === email.id}
                   className="rounded-md border border-border bg-background px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <option value="user">{USER_ROLE_LABELS.user}</option>
-                  <option value="admin">{USER_ROLE_LABELS.admin}</option>
+                  <option value="user">{t("role.user")}</option>
+                  <option value="admin">{t("role.admin")}</option>
                 </select>
               </td>
               <td className="px-4 py-3 text-muted-foreground">
@@ -76,7 +78,7 @@ export function AllowedEmailList({ emails, onRemove, onUpdateRole }: AllowedEmai
                   className="inline-flex items-center gap-1 text-destructive hover:text-destructive/80 disabled:opacity-50"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {deletingId === email.id ? "Removing..." : "Remove"}
+                  {deletingId === email.id ? t("users.removing") : t("users.remove")}
                 </button>
               </td>
             </tr>

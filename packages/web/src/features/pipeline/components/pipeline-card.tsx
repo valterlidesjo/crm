@@ -1,6 +1,6 @@
 import { useDraggable } from "@dnd-kit/core";
 import { useNavigate } from "@tanstack/react-router";
-import { CUSTOMER_STATUS_LABELS } from "@crm/shared";
+import { useTranslation } from "react-i18next";
 import type { Customer } from "@crm/shared";
 import { cn } from "@/lib/utils";
 import { GripVertical, MapPin, Briefcase } from "lucide-react";
@@ -10,6 +10,7 @@ interface PipelineCardProps {
 }
 
 export function PipelineCard({ customer }: PipelineCardProps) {
+  const { t } = useTranslation("customers");
   const navigate = useNavigate();
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: customer.id });
@@ -61,7 +62,7 @@ export function PipelineCard({ customer }: PipelineCardProps) {
 
           <div className="mt-2">
             <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {CUSTOMER_STATUS_LABELS[customer.status]}
+              {t(`status.${customer.status}`)}
             </span>
           </div>
         </div>

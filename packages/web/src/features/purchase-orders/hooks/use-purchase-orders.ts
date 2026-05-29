@@ -25,9 +25,7 @@ export interface PurchaseOrderFormData {
   notes?: string;
   items: Array<{
     productId: string;
-    variantId: string;
     productTitle: string;
-    variantTitle: string;
     quantity: number;
     unitPriceInCurrency: number;
     currency: PurchaseOrderItem["currency"];
@@ -111,7 +109,9 @@ export function usePurchaseOrders() {
   );
 
   const ordersRef = useRef(purchaseOrders);
-  ordersRef.current = purchaseOrders;
+  useEffect(() => {
+    ordersRef.current = purchaseOrders;
+  }, [purchaseOrders]);
 
   const cancelPurchaseOrder = useCallback(
     async (id: string) => {
@@ -128,7 +128,7 @@ export function usePurchaseOrders() {
 
   /**
    * Receives a purchase order atomically:
-   *   1. Increments stock on all relevant product variants
+   *   1. Increments stock on all relevant articles
    *   2. Creates a journal entry for the total cost
    *   3. Updates PO status → "received" with journalEntryId
    *
@@ -154,7 +154,7 @@ export function usePurchaseOrders() {
       const now = new Date().toISOString();
 
       await runTransaction(db, async (transaction) => {
-        // --- 1. Read all unique product docs ---
+        // --- 1. Read all unique article docs ---
         const uniqueProductIds = [...new Set(po.items.map((i) => i.productId))];
         const productRefs = uniqueProductIds.map((pid) =>
           partnerDocRef(partnerId, "products", pid)
@@ -163,45 +163,30 @@ export function usePurchaseOrders() {
           productRefs.map((r) => transaction.get(r))
         );
 
-        // Build a map: productId → current variants array
-        const productVariantsMap = new Map<
-          string,
-          Array<{ id: string; stock: number; [key: string]: unknown }>
-        >();
+        // Build a map: articleId → current stock
+        const stockMap = new Map<string, number>();
         for (const snap of productSnaps) {
           if (!snap.exists()) {
             throw new Error(
-              `Product ${snap.id} no longer exists — remove the line and try again`
+              `Article ${snap.id} no longer exists — remove the line and try again`
             );
           }
-          const data = snap.data();
-          productVariantsMap.set(snap.id, data.variants ?? []);
+          stockMap.set(snap.id, (snap.data().stock as number) ?? 0);
         }
 
-        // --- 2. Compute updated variant arrays ---
+        // --- 2. Add received quantities to each article's stock ---
         for (const item of po.items) {
-          const variants = productVariantsMap.get(item.productId);
-          if (!variants) {
-            throw new Error(`Product ${item.productId} missing from transaction`);
+          const current = stockMap.get(item.productId);
+          if (current === undefined) {
+            throw new Error(`Article ${item.productId} missing from transaction`);
           }
-          const variantIndex = variants.findIndex(
-            (v) => v.id === item.variantId
-          );
-          if (variantIndex === -1) {
-            throw new Error(
-              `Variant "${item.variantTitle}" on "${item.productTitle}" not found — the product may have changed`
-            );
-          }
-          variants[variantIndex] = {
-            ...variants[variantIndex],
-            stock: (variants[variantIndex].stock as number) + item.quantity,
-          };
+          stockMap.set(item.productId, current + item.quantity);
         }
 
-        // --- 3. Write updated product docs ---
-        for (const [productId, variants] of productVariantsMap) {
+        // --- 3. Write updated article docs ---
+        for (const [productId, stock] of stockMap) {
           transaction.update(partnerDocRef(partnerId, "products", productId), {
-            variants,
+            stock,
             updatedAt: now,
           });
         }
@@ -218,6 +203,7 @@ export function usePurchaseOrders() {
         const journalRef = doc(partnerCol(partnerId, "journalEntries"));
         transaction.set(journalRef, {
           ...journalData,
+          source: "purchase-order",
           createdAt: now,
           updatedAt: now,
         });

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { X, Download, FileDown, CalendarDays } from "lucide-react";
+import { currentLocale } from "@/i18n";
 import type { Invoice, Customer } from "@crm/shared";
 import {
   exportInvoicesToCsv,
@@ -20,6 +22,7 @@ export function ExportInvoicesDialog({
   customers,
   onClose,
 }: ExportInvoicesDialogProps) {
+  const { t } = useTranslation("invoices");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [exported, setExported] = useState(false);
@@ -85,15 +88,6 @@ export function ExportInvoicesDialog({
     return acc;
   }, {});
 
-  const STATUS_LABELS: Record<string, string> = {
-    draft: "Draft",
-    created: "Created",
-    sent: "Sent",
-    paid: "Paid",
-    overdue: "Overdue",
-    cancelled: "Cancelled",
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -108,7 +102,7 @@ export function ExportInvoicesDialog({
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-2">
             <FileDown className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">Export invoices to CSV</h2>
+            <h2 className="text-lg font-semibold">{t("export.title")}</h2>
           </div>
           <button
             type="button"
@@ -124,27 +118,21 @@ export function ExportInvoicesDialog({
           <div>
             <div className="flex items-center gap-2 mb-3">
               <CalendarDays className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Time period</span>
+              <span className="text-sm font-medium">{t("export.timePeriod")}</span>
             </div>
 
             {/* Presets */}
             <div className="flex flex-wrap gap-2 mb-3">
               {(
-                [
-                  ["all", "All"],
-                  ["thisMonth", "This month"],
-                  ["lastMonth", "Last month"],
-                  ["thisYear", "This year"],
-                  ["lastYear", "Last year"],
-                ] as const
-              ).map(([preset, label]) => (
+                ["all", "thisMonth", "lastMonth", "thisYear", "lastYear"] as const
+              ).map((preset) => (
                 <button
                   key={preset}
                   type="button"
                   onClick={() => setPreset(preset)}
                   className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted transition-colors"
                 >
-                  {label}
+                  {t(`export.presets.${preset}`)}
                 </button>
               ))}
             </div>
@@ -152,19 +140,19 @@ export function ExportInvoicesDialog({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  From (invoice date)
+                  {t("export.fromDate")}
                 </label>
                 <input
                   type="date"
                   className={INPUT_CLASS}
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  placeholder="Från start"
+                  placeholder={t("export.fromPlaceholder")}
                 />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                  To (invoice date)
+                  {t("export.toDate")}
                 </label>
                 <input
                   type="date"
@@ -177,7 +165,7 @@ export function ExportInvoicesDialog({
 
             {!dateFrom && !dateTo && (
               <p className="mt-1.5 text-xs text-muted-foreground">
-                No dates specified — exporting all invoices.
+                {t("export.noDates")}
               </p>
             )}
           </div>
@@ -186,26 +174,26 @@ export function ExportInvoicesDialog({
           {matchCount > 0 ? (
             <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
               <p className="text-sm font-medium">
-                {matchCount} invoice{matchCount !== 1 ? "s" : ""} match
+                {t("export.match", { count: matchCount })}
               </p>
 
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-xs text-muted-foreground">Excl. VAT</p>
+                  <p className="text-xs text-muted-foreground">{t("export.exclVat")}</p>
                   <p className="text-sm font-semibold tabular-nums">
-                    {totalExcl.toLocaleString("sv-SE", { minimumFractionDigits: 0 })} kr
+                    {totalExcl.toLocaleString(currentLocale(), { minimumFractionDigits: 0 })} kr
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">VAT</p>
+                  <p className="text-xs text-muted-foreground">{t("export.vat")}</p>
                   <p className="text-sm font-semibold tabular-nums">
-                    {totalVat.toLocaleString("sv-SE", { minimumFractionDigits: 0 })} kr
+                    {totalVat.toLocaleString(currentLocale(), { minimumFractionDigits: 0 })} kr
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Total incl.</p>
+                  <p className="text-xs text-muted-foreground">{t("export.totalIncl")}</p>
                   <p className="text-sm font-semibold tabular-nums">
-                    {totalIncl.toLocaleString("sv-SE", { minimumFractionDigits: 0 })} kr
+                    {totalIncl.toLocaleString(currentLocale(), { minimumFractionDigits: 0 })} kr
                   </p>
                 </div>
               </div>
@@ -217,7 +205,7 @@ export function ExportInvoicesDialog({
                       key={status}
                       className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs"
                     >
-                      {STATUS_LABELS[status] ?? status}:{" "}
+                      {t(`status.${status}`, { defaultValue: status })}:{" "}
                       <span className="font-medium">{count}</span>
                     </span>
                   ))}
@@ -227,7 +215,7 @@ export function ExportInvoicesDialog({
           ) : (
             <div className="rounded-lg border border-border bg-muted/20 p-4">
               <p className="text-sm text-muted-foreground text-center">
-                No invoices match the selected period.
+                {t("export.noMatch")}
               </p>
             </div>
           )}
@@ -236,10 +224,10 @@ export function ExportInvoicesDialog({
           {exported && (
             <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
               <p className="text-sm text-green-700 font-medium">
-                {exportedCount} invoice{exportedCount !== 1 ? "s" : ""} exported!
+                {t("export.exported", { count: exportedCount })}
               </p>
               <p className="text-xs text-green-600 mt-0.5">
-                The file will open automatically in your downloads folder.
+                {t("export.exportedHint")}
               </p>
             </div>
           )}
@@ -247,7 +235,7 @@ export function ExportInvoicesDialog({
           {/* CSV column info */}
           <details className="group">
             <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground select-none">
-              Show exported columns
+              {t("export.showColumns")}
             </summary>
             <div className="mt-2 text-xs text-muted-foreground font-mono bg-muted/30 rounded-md px-3 py-2 leading-relaxed">
               invoiceNumber, invoiceRef, customerName, invoiceDate, dueDate, paidDate, status, subtotal, vatAmount, totalAmount, currency, overdueInterestRate, isInternational, language, notes, createdAt
@@ -262,7 +250,7 @@ export function ExportInvoicesDialog({
             onClick={onClose}
             className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
           >
-            Close
+            {t("export.close")}
           </button>
           <button
             type="button"
@@ -271,7 +259,7 @@ export function ExportInvoicesDialog({
             className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Download className="h-4 w-4" />
-            Export {matchCount > 0 ? `${matchCount}` : ""}
+            {matchCount > 0 ? t("export.exportButton", { count: matchCount }) : t("export.exportButtonEmpty")}
           </button>
         </div>
       </div>
