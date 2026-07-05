@@ -1,10 +1,18 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
+import { googleCategoryForProductType } from "./category";
+import { requireSuperAdmin } from "../lib/require-super-admin.js";
 
 interface SyncShopifyProductsInput {
   partnerId: string;
   forceStockOverwrite?: boolean;
+  /**
+   * When true, re-pulls price + compareAtPrice from Shopify on existing
+   * articles. Off by default — CRM owns price, so an accidental re-sync
+   * shouldn't clobber CRM-set prices.
+   */
+  forcePriceOverwrite?: boolean;
 }
 
 interface ShopifyVariantNode {
@@ -12,6 +20,7 @@ interface ShopifyVariantNode {
   title: string;
   sku: string | null;
   price: string;
+  compareAtPrice: string | null;
   inventoryItem: {
     id: string;
     inventoryLevels: {
@@ -31,6 +40,7 @@ interface ShopifyProductNode {
   descriptionHtml: string;
   handle: string;
   vendor: string;
+  productType: string;
   images: { edges: Array<{ node: { url: string } }> };
   variants: { edges: Array<{ node: ShopifyVariantNode }> };
 }
@@ -48,12 +58,12 @@ const PRODUCTS_QUERY = `
       pageInfo { hasNextPage endCursor }
       edges {
         node {
-          id title descriptionHtml handle vendor
+          id title descriptionHtml handle vendor productType
           images(first: 1) { edges { node { url } } }
           variants(first: 100) {
             edges {
               node {
-                id title sku price
+                id title sku price compareAtPrice
                 inventoryItem {
                   id
                   inventoryLevels(first: 1) {
@@ -136,22 +146,11 @@ async function copyImageToStorage(
 export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
   { region: "europe-west1", timeoutSeconds: 300, memory: "512MiB", invoker: "public" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
+    await requireSuperAdmin(request, "sync Shopify products");
 
     const db = getFirestore();
 
-    const callerEmail = request.auth.token.email;
-    if (!callerEmail) {
-      throw new HttpsError("unauthenticated", "Must be authenticated with email");
-    }
-    const allowedEmailSnap = await db.doc(`allowedEmails/${callerEmail}`).get();
-    if (allowedEmailSnap.data()?.platformRole !== "superAdmin") {
-      throw new HttpsError("permission-denied", "Only superAdmins can sync Shopify products");
-    }
-
-    const { partnerId, forceStockOverwrite } = request.data;
+    const { partnerId, forceStockOverwrite, forcePriceOverwrite } = request.data;
     if (!partnerId) {
       throw new HttpsError("invalid-argument", "partnerId is required");
     }
@@ -237,6 +236,9 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
         .replace(/<[^>]+>/g, "")
         .trim();
 
+      const productType = shopifyProduct.productType?.trim() || undefined;
+      const googleProductCategory = googleCategoryForProductType(productType);
+
       const variantNodes = shopifyProduct.variants.edges.map((e) => e.node);
       const isSingle = variantNodes.length === 1;
 
@@ -254,14 +256,23 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
 
         const existing = existingByVariantId.get(v.id);
 
+        const priceFields = {
+          ...(parseFloat(v.price) && { price: parseFloat(v.price) }),
+          ...(v.compareAtPrice &&
+            parseFloat(v.compareAtPrice) > 0 && {
+              compareAtPrice: parseFloat(v.compareAtPrice),
+            }),
+        };
+
         const baseFields = {
           title,
           groupTitle: shopifyProduct.title,
           ...(description && { description }),
           ...(shopifyProduct.vendor && { vendor: shopifyProduct.vendor }),
+          ...(productType && { productType }),
+          ...(googleProductCategory && { googleProductCategory }),
           ...(imageUrl && { imageUrl }),
           ...(v.sku && { sku: v.sku }),
-          ...(parseFloat(v.price) && { price: parseFloat(v.price) }),
           shopifyProductId: shopifyProduct.id,
           shopifyHandle: shopifyProduct.handle,
           shopifyVariantId: v.id,
@@ -276,6 +287,7 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
         if (existing) {
           await productsCol.doc(existing.docId).update({
             ...baseFields,
+            ...(forcePriceOverwrite ? priceFields : {}),
             stock: forceStockOverwrite ? availableQty : existing.stock,
           });
           synced++;
@@ -285,6 +297,7 @@ export const syncShopifyProducts = onCall<SyncShopifyProductsInput>(
           await productsCol.doc(docId).set({
             id: docId,
             ...baseFields,
+            ...priceFields,
             stock: availableQty,
             status: "active",
             createdAt: now,

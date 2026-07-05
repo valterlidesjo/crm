@@ -187,8 +187,16 @@ service cloud.firestore {
       // Admin: can only read/manage emails that belong to their own partner.
       // Uses resource.data for read/update/delete (existing doc),
       // and request.resource.data for create (new doc).
-      allow read, update, delete: if isAdmin() && resource.data.partnerId == getUserPartnerId();
-      allow create: if isAdmin() && request.resource.data.partnerId == getUserPartnerId();
+      // Only superAdmins may ever set or change `platformRole` (privilege
+      // escalation guard) or move a doc to another partner.
+      allow read, delete: if isAdmin() && resource.data.partnerId == getUserPartnerId();
+      allow update: if isAdmin()
+        && resource.data.partnerId == getUserPartnerId()
+        && request.resource.data.get('partnerId', null) == resource.data.partnerId
+        && request.resource.data.get('platformRole', null) == resource.data.get('platformRole', null);
+      allow create: if isAdmin()
+        && request.resource.data.partnerId == getUserPartnerId()
+        && !('platformRole' in request.resource.data);
 
       // Any authenticated user can read their own allowedEmails document.
       allow read: if isAuthenticated() && request.auth.token.email == emailId;

@@ -72,6 +72,47 @@ export async function setShopifyAvailable(
   if (userErrors.length > 0) throw new Error(userErrors[0].message);
 }
 
+const SET_VARIANT_PRICES_MUTATION = `
+  mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+    productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+      userErrors { code field message }
+    }
+  }
+`;
+
+/**
+ * Set price + (optional) compareAtPrice on a single Shopify variant. CRM is
+ * the source of truth — re-asserting the same value is a no-op.
+ *
+ * compareAtPrice is sent as null when unset so removing a sale clears the
+ * strikethrough on Shopify instead of leaving stale data behind.
+ */
+export async function setShopifyPrice(
+  config: ShopifyConfig,
+  shopifyProductId: string,
+  shopifyVariantId: string,
+  price: number,
+  compareAtPrice: number | undefined
+): Promise<void> {
+  const data = (await shopifyGraphQL(config, SET_VARIANT_PRICES_MUTATION, {
+    productId: shopifyProductId,
+    variants: [
+      {
+        id: shopifyVariantId,
+        price: price.toFixed(2),
+        compareAtPrice:
+          compareAtPrice !== undefined && compareAtPrice > 0
+            ? compareAtPrice.toFixed(2)
+            : null,
+      },
+    ],
+  })) as {
+    productVariantsBulkUpdate?: { userErrors?: Array<{ message: string }> };
+  };
+  const userErrors = data?.productVariantsBulkUpdate?.userErrors ?? [];
+  if (userErrors.length > 0) throw new Error(userErrors[0].message);
+}
+
 /** Load a partner's Shopify credentials, or null if not configured. */
 export async function loadShopifyConfig(
   db: DB,

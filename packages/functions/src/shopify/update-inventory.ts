@@ -1,5 +1,6 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
+import { requireSuperAdmin } from "../lib/require-super-admin.js";
 
 interface UpdateInventoryInput {
   partnerId: string;
@@ -73,14 +74,19 @@ const SET_QUANTITIES_MUTATION = `
 export const updateShopifyInventory = onCall<UpdateInventoryInput>(
   { region: "europe-west1", invoker: "public" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
+    await requireSuperAdmin(request, "update Shopify inventory");
 
     const { partnerId, inventoryItemId, locationId, newQuantity } =
       request.data;
 
-    if (!partnerId || !inventoryItemId || !locationId || newQuantity < 0) {
+    if (
+      !partnerId ||
+      !inventoryItemId ||
+      !locationId ||
+      typeof newQuantity !== "number" ||
+      !Number.isFinite(newQuantity) ||
+      newQuantity < 0
+    ) {
       throw new HttpsError("invalid-argument", "Missing required fields");
     }
 

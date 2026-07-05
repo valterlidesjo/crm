@@ -4,6 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { usePartner } from "@/lib/partner";
 import { useProducts } from "../hooks/use-products";
+import { googleCategoryForProductType } from "@crm/shared";
 import { X, Upload, ImageIcon } from "lucide-react";
 
 interface AddProductDialogProps {
@@ -17,8 +18,10 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
 
   const [title, setTitle] = useState("");
   const [groupTitle, setGroupTitle] = useState("");
+  const [productType, setProductType] = useState("");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState("");
+  const [compareAtPrice, setCompareAtPrice] = useState("");
   const [stock, setStock] = useState("0");
   const [description, setDescription] = useState("");
   const [vendor, setVendor] = useState("");
@@ -54,11 +57,24 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
         imageUrl = await getDownloadURL(storageRef);
       }
 
+      const trimmedProductType = productType.trim() || undefined;
+
+      const parsedPrice = price ? parseFloat(price) : undefined;
+      const parsedCompareAt = compareAtPrice
+        ? parseFloat(compareAtPrice)
+        : undefined;
+
       await addProduct({
         title: title.trim(),
         groupTitle: groupTitle.trim() || undefined,
+        productType: trimmedProductType,
+        googleProductCategory: googleCategoryForProductType(trimmedProductType),
         sku: sku.trim() || undefined,
-        price: price ? parseFloat(price) : undefined,
+        price: parsedPrice,
+        compareAtPrice:
+          parsedCompareAt && parsedPrice && parsedCompareAt > parsedPrice
+            ? parsedCompareAt
+            : undefined,
         stock: parseInt(stock, 10) || 0,
         description: description.trim() || undefined,
         vendor: vendor.trim() || undefined,
@@ -131,6 +147,22 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
               />
             </div>
 
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("addProduct.fieldProductType")}
+              </label>
+              <input
+                type="text"
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                placeholder={t("addProduct.productTypePlaceholder")}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("addProduct.productTypeHelp")}
+              </p>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-medium">
                 {t("addProduct.fieldPrice")}
@@ -144,6 +176,24 @@ export function AddProductDialog({ onClose }: AddProductDialogProps) {
                 step="1"
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("addProduct.fieldCompareAtPrice")}
+              </label>
+              <input
+                type="number"
+                value={compareAtPrice}
+                onChange={(e) => setCompareAtPrice(e.target.value)}
+                placeholder={t("addProduct.compareAtPlaceholder")}
+                min="0"
+                step="1"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("addProduct.compareAtHelp")}
+              </p>
             </div>
 
             <div>

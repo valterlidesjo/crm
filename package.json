@@ -14,8 +14,10 @@
     "lint": "npm run lint -w @crm/web",
     "migrate:allowed-emails": "node scripts/migrate-allowed-emails.mjs",
     "migrate:split-variants": "node scripts/migrate-split-variants.mjs",
+    "backfill:product-type": "node scripts/backfill-product-type.mjs",
     "sync:skus": "node scripts/sync-skus.mjs",
-    "sync:cdon": "node scripts/sync-cdon.mjs"
+    "sync:cdon": "node scripts/sync-cdon.mjs",
+    "verify:sync": "node scripts/verify-sync.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3"

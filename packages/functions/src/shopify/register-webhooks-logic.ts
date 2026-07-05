@@ -11,10 +11,22 @@ export const WEBHOOK_TOPICS = [
 
 export type WebhookTopic = (typeof WEBHOOK_TOPICS)[number];
 
+export interface WebhookOpFailure {
+  topic: string;
+  op: "create" | "update";
+  messages: string[];
+}
+
 export interface RegisterWebhooksResult {
   created: number;
   updated: number;
   topics: string[];
+  failures: WebhookOpFailure[];
+}
+
+interface UserError {
+  field?: string[] | null;
+  message: string;
 }
 
 interface ExistingSubscription {
@@ -78,6 +90,33 @@ function topicToGqlEnum(topic: string): string {
   return topic.replace("/", "_").toUpperCase();
 }
 
+export interface ListedSubscription {
+  id: string;
+  topic: string;
+  callbackUrl: string;
+}
+
+export async function listWebhooks(
+  storeUrl: string,
+  accessToken: string,
+  fetchFn: typeof fetch = fetch
+): Promise<ListedSubscription[]> {
+  const res = (await shopifyGraphQL(
+    storeUrl,
+    accessToken,
+    LIST_WEBHOOKS_QUERY,
+    {},
+    fetchFn
+  )) as {
+    data: { webhookSubscriptions: { edges: Array<{ node: ExistingSubscription }> } };
+  };
+  return res.data.webhookSubscriptions.edges.map(({ node }) => ({
+    id: node.id,
+    topic: node.topic.toLowerCase().replace("_", "/"),
+    callbackUrl: node.callbackUrl,
+  }));
+}
+
 export async function registerWebhooks(
   storeUrl: string,
   accessToken: string,
@@ -98,29 +137,44 @@ export async function registerWebhooks(
 
   let created = 0;
   let updated = 0;
+  const failures: WebhookOpFailure[] = [];
 
   for (const topic of WEBHOOK_TOPICS) {
     const existingId = existing.get(topic);
     if (existingId) {
-      await shopifyGraphQL(
+      const res = (await shopifyGraphQL(
         storeUrl,
         accessToken,
         UPDATE_WEBHOOK_MUTATION,
         { id: existingId, callbackUrl: webhookUrl },
         fetchFn
-      );
-      updated++;
+      )) as {
+        data?: { webhookSubscriptionUpdate?: { userErrors?: UserError[] } };
+      };
+      const errs = res.data?.webhookSubscriptionUpdate?.userErrors ?? [];
+      if (errs.length) {
+        failures.push({ topic, op: "update", messages: errs.map((e) => e.message) });
+      } else {
+        updated++;
+      }
     } else {
-      await shopifyGraphQL(
+      const res = (await shopifyGraphQL(
         storeUrl,
         accessToken,
         CREATE_WEBHOOK_MUTATION,
         { topic: topicToGqlEnum(topic), callbackUrl: webhookUrl },
         fetchFn
-      );
-      created++;
+      )) as {
+        data?: { webhookSubscriptionCreate?: { userErrors?: UserError[] } };
+      };
+      const errs = res.data?.webhookSubscriptionCreate?.userErrors ?? [];
+      if (errs.length) {
+        failures.push({ topic, op: "create", messages: errs.map((e) => e.message) });
+      } else {
+        created++;
+      }
     }
   }
 
-  return { created, updated, topics: [...WEBHOOK_TOPICS] };
+  return { created, updated, topics: [...WEBHOOK_TOPICS], failures };
 }

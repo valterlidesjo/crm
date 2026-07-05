@@ -108,7 +108,9 @@ export const reconcileShopifyOrders = onSchedule(
   { schedule: "every 60 minutes", region: "europe-west1" },
   async () => {
     const db = getFirestore();
-    const sinceIso = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+    // 72-hour look-back so a multi-day webhook outage still gets reconciled
+    // once the read_orders scope is in place.
+    const sinceIso = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
 
     const integrations = await db.collectionGroup("integrations").get();
     for (const doc of integrations.docs) {

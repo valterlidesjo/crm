@@ -123,6 +123,56 @@ export async function bulkUpsertArticles(
   return cdonRequest(config, "POST", "/v2/articles/bulk", { articles });
 }
 
+const SE_MARKET = "SE";
+const SE_CURRENCY = "SEK";
+const SE_VAT_RATE = 0.25;
+
+/**
+ * Push price for a single CDON article. CDON has no targeted "set price"
+ * endpoint, so we use the bulk upsert with a minimal payload keyed by SKU.
+ * Upserts on `/v2/articles/bulk` merge per field — other attributes
+ * (category, manufacturer, gtin, …) set by the initial create stay intact.
+ *
+ * compareAtPrice maps to `recommended_retail_price` (the strikethrough/
+ * pre-discount price on CDON). When unset, the field is omitted — CDON keeps
+ * the previous value rather than clearing it; full re-syncs via the bulk
+ * script remain the way to fully reset article state.
+ */
+export async function pushCdonPrice(
+  config: CdonConfig,
+  sku: string,
+  price: number,
+  compareAtPrice: number | undefined
+): Promise<CdonResponse> {
+  const market = config.market ?? SE_MARKET;
+  const article: Record<string, unknown> = {
+    sku,
+    price: [
+      {
+        market,
+        value: {
+          amount_including_vat: price,
+          currency: SE_CURRENCY,
+          vat_rate: SE_VAT_RATE,
+        },
+      },
+    ],
+  };
+  if (compareAtPrice !== undefined && compareAtPrice > price) {
+    article.recommended_retail_price = [
+      {
+        market,
+        value: {
+          amount_including_vat: compareAtPrice,
+          currency: SE_CURRENCY,
+          vat_rate: SE_VAT_RATE,
+        },
+      },
+    ];
+  }
+  return bulkUpsertArticles(config, [article]);
+}
+
 /** Load a partner's CDON credentials, or null if not configured. */
 export async function loadCdonConfig(
   db: DB,

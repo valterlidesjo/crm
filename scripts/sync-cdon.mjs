@@ -27,12 +27,33 @@ import { homedir, tmpdir } from 'os';
 import { SKU_MAP, lookupSkuGtin } from './cdon-sku-map.mjs';
 
 // ─── CONFIG ─────────────────────────────────────────────────────────────────
-const PARTNER_ID = 'hemdeal-ab';
+const PARTNER_ID = process.env.CDON_PARTNER_ID || 'hemdeal-ab';
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'valter-crm';
 
 const CDON_BASE_URL = 'https://merchants-api.cdon.com/api';
-const CDON_MERCHANT_ID = '28375ab8-261d-49ca-84fa-23f5fdfa608d';
-const CDON_TOKEN = 'bcb579bc-166e-453e-9b79-c36872645a62';
+
+// Credentials come from the environment (or the gitignored .env.local at the
+// repo root) — never hardcode them here; this file is tracked by git.
+loadEnvLocal();
+const CDON_MERCHANT_ID = process.env.CDON_MERCHANT_ID;
+const CDON_TOKEN = process.env.CDON_TOKEN;
+if (!CDON_MERCHANT_ID || !CDON_TOKEN) {
+  console.error('Missing CDON credentials.');
+  console.error('Set CDON_MERCHANT_ID and CDON_TOKEN in the environment or in .env.local at the repo root.');
+  process.exit(1);
+}
+
+function loadEnvLocal() {
+  try {
+    const envPath = join(import.meta.dirname, '..', '.env.local');
+    for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+      const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+      if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+    }
+  } catch {
+    // no .env.local — rely on the ambient environment
+  }
+}
 
 const MARKET = 'SE';
 const CURRENCY = 'SEK';

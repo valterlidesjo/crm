@@ -26,6 +26,23 @@ export interface PushResult {
 }
 
 /**
+ * Trigger gate: push only when stock actually changed (or the article was
+ * just created) and the article is linked to at least one channel. Pure so
+ * the sync-flow tests can drive the exact decision the Firestore trigger makes.
+ */
+export function shouldPushStock(
+  before: ArticleStockFields | undefined,
+  after: ArticleStockFields | undefined
+): boolean {
+  if (!after) return false; // deleted
+  const stockChanged = !before || before.stock !== after.stock;
+  if (!stockChanged) return false;
+  return Boolean(
+    (after.shopifyInventoryItemId && after.shopifyLocationId) || after.cdonSku
+  );
+}
+
+/**
  * Fan a CRM article's stock out to every linked sales channel. CRM is the
  * source of truth, so this asserts the absolute quantity (idempotent) rather
  * than applying deltas. Failures on one channel never block the other.
@@ -68,7 +85,14 @@ export async function pushArticleStock(
           articleId = cdonArticle?.id;
         }
         if (articleId) {
-          await setArticleQuantity(config, articleId, stock);
+          // cdonRequest never throws on HTTP errors — check the response, or a
+          // 401/422 from CDON silently counts as "pushed" and stock drifts.
+          const res = await setArticleQuantity(config, articleId, stock);
+          if (!res.ok) {
+            throw new Error(
+              `CDON ${res.status}: ${JSON.stringify(res.body).slice(0, 300)}`
+            );
+          }
           result.cdon = "pushed";
         }
       }

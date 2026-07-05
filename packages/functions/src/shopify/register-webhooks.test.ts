@@ -71,6 +71,53 @@ describe("registerWebhooks", () => {
     expect(createCalls).toHaveLength(8);
     expect(result.created).toBe(8);
     expect(result.updated).toBe(0);
+    expect(result.failures).toEqual([]);
+  });
+
+  it("counts create failures separately when Shopify returns userErrors", async () => {
+    // Simulates the scope-missing case: mutation fires but Shopify rejects with
+    // a userError. We must NOT count these as "created" — that's what tricked
+    // us on hemdeal (read_orders scope missing → 5 silent failures reported as
+    // "Skapade: 5").
+    const scopeMissingTopics = new Set([
+      "orders/create",
+      "orders/paid",
+      "orders/cancelled",
+      "orders/fulfilled",
+      "refunds/create",
+    ]);
+
+    const fetchFn = vi.fn().mockImplementation(async (_url: string, opts: RequestInit) => {
+      const body = JSON.parse(opts.body as string);
+      if (body.query.includes("webhookSubscriptions")) {
+        return { json: async () => makeListResponse([]) };
+      }
+      const topicEnum = body.variables?.topic as string;
+      const topic = topicEnum.toLowerCase().replace("_", "/");
+      if (scopeMissingTopics.has(topic)) {
+        return {
+          json: async () => ({
+            data: {
+              webhookSubscriptionCreate: {
+                webhookSubscription: null,
+                userErrors: [{ field: ["topic"], message: "Access denied: requires read_orders" }],
+              },
+            },
+          }),
+        };
+      }
+      return { json: async () => makeCreateResponse(topic) };
+    });
+
+    const result = await registerWebhooks(STORE_URL, ACCESS_TOKEN, WEBHOOK_URL, fetchFn as typeof fetch);
+
+    expect(result.created).toBe(3); // only products/*
+    expect(result.updated).toBe(0);
+    expect(result.failures).toHaveLength(5);
+    expect(result.failures.map((f) => f.topic).sort()).toEqual(
+      [...scopeMissingTopics].sort()
+    );
+    expect(result.failures[0].messages[0]).toContain("read_orders");
   });
 
   it("updates existing subscriptions instead of creating duplicates", async () => {

@@ -1,6 +1,10 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { getFirestore } from "firebase-admin/firestore";
-import { pushArticleStock, type ArticleStockFields } from "./stock-push.js";
+import {
+  pushArticleStock,
+  shouldPushStock,
+  type ArticleStockFields,
+} from "./stock-push.js";
 
 /**
  * CRM is the single source of truth for stock. Whenever an article's `stock`
@@ -17,18 +21,11 @@ export const syncStockToChannels = onDocumentWritten(
   },
   async (event) => {
     const after = event.data?.after.data() as ArticleStockFields | undefined;
-    if (!after) return; // deleted
-
     const before = event.data?.before.data() as ArticleStockFields | undefined;
 
-    // Act only on real stock changes (and on first creation).
-    const stockChanged = !before || before.stock !== after.stock;
-    if (!stockChanged) return;
-
-    // Nothing to push if this article isn't linked to any channel.
-    const linked =
-      (after.shopifyInventoryItemId && after.shopifyLocationId) || after.cdonSku;
-    if (!linked) return;
+    // Act only on real stock changes (and on first creation), and only for
+    // articles linked to at least one channel.
+    if (!after || !shouldPushStock(before, after)) return;
 
     const { partnerId, productId } = event.params as {
       partnerId: string;

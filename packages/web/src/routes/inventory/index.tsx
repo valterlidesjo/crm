@@ -8,6 +8,7 @@ import { StockAdjustmentDialog } from "@/features/inventory/components/stock-adj
 import { PrivateSaleDialog } from "@/features/inventory/components/private-sale-dialog";
 import { ShopifySyncDialog } from "@/features/inventory/components/shopify-sync-dialog";
 import { CdonSyncDialog } from "@/features/inventory/components/cdon-sync-dialog";
+import { PricesSyncDialog } from "@/features/inventory/components/prices-sync-dialog";
 import { useProducts } from "@/features/inventory/hooks/use-products";
 import { requireAdmin } from "@/lib/route-guards";
 import { useIsSuperAdmin } from "@/lib/auth";
@@ -26,6 +27,7 @@ function InventoryPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [showSync, setShowSync] = useState(false);
   const [showCdon, setShowCdon] = useState(false);
+  const [showPrices, setShowPrices] = useState(false);
   const [adjustProduct, setAdjustProduct] = useState<Product | null>(null);
   const [saleProduct, setSaleProduct] = useState<Product | null>(null);
 
@@ -52,6 +54,16 @@ function InventoryPage() {
             >
               <RefreshCw className="h-4 w-4" />
               {t("page.syncCdon")}
+            </button>
+          )}
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowPrices(true)}
+              className="flex items-center gap-1.5 rounded-md border border-border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              {t("page.syncPrices")}
             </button>
           )}
           {isSuperAdmin && (
@@ -96,6 +108,8 @@ function InventoryPage() {
       {showSync && <ShopifySyncDialog onClose={() => setShowSync(false)} />}
 
       {showCdon && <CdonSyncDialog onClose={() => setShowCdon(false)} />}
+
+      {showPrices && <PricesSyncDialog onClose={() => setShowPrices(false)} />}
     </PageContainer>
   );
 }

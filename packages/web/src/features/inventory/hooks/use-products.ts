@@ -20,9 +20,12 @@ export interface ProductFormData {
   status: "active" | "archived";
   sku?: string;
   price?: number;
+  compareAtPrice?: number;
   costPrice?: number;
   stock: number;
   groupTitle?: string;
+  productType?: string;
+  googleProductCategory?: string;
 }
 
 export function useProducts() {
@@ -68,6 +71,8 @@ export function useProducts() {
           price: data.price,
           costPrice: data.costPrice,
           groupTitle: data.groupTitle,
+          productType: data.productType,
+          googleProductCategory: data.googleProductCategory,
           description: data.description,
           imageUrl: data.imageUrl,
           vendor: data.vendor,

@@ -24,8 +24,8 @@ class MockDocRef {
     this._exists = true;
   }
 
-  async set(data: DocData): Promise<void> {
-    this.data = { ...data };
+  async set(data: DocData, options?: { merge?: boolean }): Promise<void> {
+    this.data = options?.merge ? { ...this.data, ...data } : { ...data };
     this._exists = true;
   }
 }
@@ -109,6 +109,33 @@ class MockCollectionRef {
   }
 }
 
+// Transaction stub: reads see pre-transaction state, writes are buffered and
+// applied on commit — mirrors the reads-before-writes shape of real Firestore
+// transactions closely enough for the handlers under test.
+class MockTransaction {
+  private writes: Array<() => Promise<void>> = [];
+
+  async get(
+    refOrQuery: MockDocRef | MockQuery
+  ): Promise<{ exists?: boolean; data(): DocData; ref?: MockDocRef } | MockQuerySnapshot> {
+    return refOrQuery.get();
+  }
+
+  set(ref: MockDocRef, data: DocData, options?: { merge?: boolean }): this {
+    this.writes.push(() => ref.set(data, options));
+    return this;
+  }
+
+  update(ref: MockDocRef, data: DocData): this {
+    this.writes.push(() => ref.update(data));
+    return this;
+  }
+
+  async commit(): Promise<void> {
+    for (const write of this.writes) await write();
+  }
+}
+
 export class MockFirestore {
   private collections = new Map<string, Map<string, MockDocRef>>();
 
@@ -117,6 +144,22 @@ export class MockFirestore {
       this.collections.set(path, new Map());
     }
     return new MockCollectionRef(this.collections.get(path)!, path);
+  }
+
+  async runTransaction<T>(
+    fn: (tx: MockTransaction) => Promise<T>
+  ): Promise<T> {
+    const tx = new MockTransaction();
+    const result = await fn(tx);
+    await tx.commit();
+    return result;
+  }
+
+  // Admin-SDK-style db.doc("partners/x/integrations/shopify") — returns a ref.
+  docRef(path: string): MockDocRef {
+    const segments = path.split("/");
+    const id = segments.pop()!;
+    return this.collection(segments.join("/")).doc(id);
   }
 
   // Seed a document into a collection for test setup
@@ -136,8 +179,12 @@ export class MockFirestore {
     );
   }
 
-  // Read back a single doc by id
-  doc(collectionPath: string, id: string): DocData | undefined {
+  // Admin-SDK-style: db.doc("partners/x/integrations/shopify") → ref.
+  doc(path: string): MockDocRef;
+  // Test helper: read back a single doc's data by (collectionPath, id).
+  doc(collectionPath: string, id: string): DocData | undefined;
+  doc(collectionPath: string, id?: string): MockDocRef | DocData | undefined {
+    if (id === undefined) return this.docRef(collectionPath);
     return this.collections.get(collectionPath)?.get(id)?.data;
   }
 }

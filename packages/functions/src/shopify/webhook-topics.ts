@@ -1,4 +1,5 @@
 import { getFirestore } from "firebase-admin/firestore";
+import { googleCategoryForProductType } from "./category";
 
 type DB = ReturnType<typeof getFirestore>;
 
@@ -30,6 +31,7 @@ export interface ShopifyRefundLineItem {
 }
 
 export interface ShopifyRefundPayload {
+  id?: number;
   order_id: number;
   refund_line_items: ShopifyRefundLineItem[];
 }
@@ -39,6 +41,7 @@ export interface ShopifyProductPayload {
   title?: string;
   body_html?: string;
   vendor?: string;
+  product_type?: string;
   variants?: Array<{
     id: number;
     title: string;
@@ -85,18 +88,6 @@ function wasStockApplied(existing: Record<string, unknown> | undefined): boolean
   return STOCK_APPLIED_STATES.has(existing.status as string);
 }
 
-async function getOrder(
-  db: DB,
-  partnerId: string,
-  orderId: number
-): Promise<Record<string, unknown> | undefined> {
-  const snap = await db
-    .collection(`partners/${partnerId}/orders`)
-    .doc(String(orderId))
-    .get();
-  return snap.exists ? (snap.data() as Record<string, unknown>) : undefined;
-}
-
 function buildOrderDoc(
   payload: ShopifyOrderPayload,
   status: string,
@@ -130,50 +121,67 @@ async function upsertOrder(
   const ref = db.collection(`partners/${partnerId}/orders`).doc(docId);
   const snap = await ref.get();
   if (snap.exists) {
-    await ref.update({ ...data, updatedAt: new Date().toISOString() });
+    // Never rewrite createdAt on the update path — re-deliveries and the
+    // hourly reconcile would otherwise clobber it on every pass.
+    const { createdAt: _createdAt, ...update } = data;
+    await ref.update({ ...update, updatedAt: new Date().toISOString() });
   } else {
     await ref.set({ id: docId, ...data });
   }
 }
 
-// Adjust stock for a list of line items (delta = positive → add, negative → subtract).
-// Each line item maps to a single article matched by shopifyVariantId.
-async function adjustStock(
+type DocRef = FirebaseFirestore.DocumentReference;
+type Tx = FirebaseFirestore.Transaction;
+
+// Resolve each line item to its CRM article ref (matched by shopifyVariantId).
+// Queries can't run inside our transactions, so refs are resolved up front and
+// the stock mutation happens transactionally on the refs.
+async function resolveArticleRefs(
   db: DB,
   partnerId: string,
-  lineItems: Array<{ variant_id: number; quantity: number }>,
-  delta: 1 | -1
-): Promise<void> {
-  const now = new Date().toISOString();
-
+  lineItems: Array<{ variant_id: number; quantity: number }>
+): Promise<Array<{ ref: DocRef; quantity: number }>> {
+  const resolved: Array<{ ref: DocRef; quantity: number }> = [];
   for (const lineItem of lineItems) {
-    const shopifyVariantId = variantGid(lineItem.variant_id);
-
     const snap = await db
       .collection(`partners/${partnerId}/products`)
-      .where("shopifyVariantId", "==", shopifyVariantId)
+      .where("shopifyVariantId", "==", variantGid(lineItem.variant_id))
       .limit(1)
       .get();
     if (snap.empty) continue;
+    resolved.push({ ref: snap.docs[0].ref, quantity: lineItem.quantity });
+  }
+  return resolved;
+}
 
-    const docRef = snap.docs[0].ref;
-    const current = (snap.docs[0].data().stock as number) ?? 0;
-    const newStock = Math.max(0, current + delta * lineItem.quantity);
-    await docRef.update({ stock: newStock, updatedAt: now });
+// Upsert an order doc inside a transaction. The update path never rewrites
+// createdAt (see upsertOrder).
+function writeOrderInTx(
+  tx: Tx,
+  ref: DocRef,
+  exists: boolean,
+  data: Record<string, unknown>
+): void {
+  if (exists) {
+    const { createdAt: _createdAt, ...update } = data;
+    tx.update(ref, update);
+  } else {
+    tx.set(ref, { id: ref.id, ...data });
   }
 }
 
 // Create or update one article per Shopify variant. Group-level fields
 // (title, vendor, description) are written onto every article in the group;
-// per-article fields (sku, price, stock) come from the variant.
+// per-article fields (sku, stock, price) come from the variant.
 async function upsertArticlesFromProduct(
   db: DB,
   partnerId: string,
   payload: ShopifyProductPayload,
-  // CRM is the source of truth for stock. On products/update we refresh
-  // metadata (title/price/…) but must NOT clobber CRM stock on existing
-  // articles. New articles always get their initial stock from Shopify.
-  setStockOnExisting = true
+  // CRM is the source of truth for stock AND price. On products/update we
+  // refresh metadata (title/vendor/…) but must NOT clobber CRM stock or price
+  // on existing articles. New articles seed both from Shopify.
+  setStockOnExisting = true,
+  setPriceOnExisting = true
 ): Promise<void> {
   const shopifyProductId = productGid(payload.id);
   const now = new Date().toISOString();
@@ -181,6 +189,8 @@ async function upsertArticlesFromProduct(
   const description = payload.body_html
     ? payload.body_html.replace(/<[^>]+>/g, "").trim()
     : undefined;
+  const productType = payload.product_type?.trim() || undefined;
+  const googleProductCategory = googleCategoryForProductType(productType);
 
   const col = db.collection(`partners/${partnerId}/products`);
   const existingSnap = await col
@@ -205,23 +215,27 @@ async function upsertArticlesFromProduct(
       groupTitle,
       ...(description !== undefined && { description }),
       ...(payload.vendor && { vendor: payload.vendor }),
+      ...(productType && { productType }),
+      ...(googleProductCategory && { googleProductCategory }),
       ...(v.sku && { sku: v.sku }),
-      price: parseFloat(v.price),
       status: "active",
       shopifyProductId,
       shopifyVariantId: vGid,
       updatedAt: now,
     };
+    const variantPrice = parseFloat(v.price);
 
     const existingRef = existingByVariant.get(vGid);
     if (existingRef) {
       if (setStockOnExisting) fields.stock = v.inventory_quantity ?? 0;
+      if (setPriceOnExisting && variantPrice) fields.price = variantPrice;
       await existingRef.update(fields);
     } else {
       const docId = `shopify-variant-${v.id}`;
       await col.doc(docId).set({
         id: docId,
         ...fields,
+        ...(variantPrice && { price: variantPrice }),
         stock: v.inventory_quantity ?? 0,
         createdAt: now,
       });
@@ -246,16 +260,41 @@ export async function handleOrderPaid(
   payload: ShopifyOrderPayload
 ): Promise<void> {
   const now = new Date().toISOString();
-  // Idempotent: Shopify may deliver orders/paid more than once, and the hourly
-  // reconciliation may re-see the same order. Only decrement stock the first time.
-  const alreadyApplied = wasStockApplied(await getOrder(db, partnerId, payload.id));
-  await upsertOrder(db, partnerId, payload.id, {
-    ...buildOrderDoc(payload, "paid", now),
-    stockApplied: true,
+  const orderRef = db
+    .collection(`partners/${partnerId}/orders`)
+    .doc(String(payload.id));
+  const articles = await resolveArticleRefs(db, partnerId, payload.line_items ?? []);
+
+  // One transaction: the idempotency check, the stock decrement and the
+  // stockApplied flag commit atomically. Duplicate deliveries (webhook retry,
+  // hourly reconcile) contend on the order doc and the loser sees the flag;
+  // concurrent orders on the same article contend on the article doc, so no
+  // decrement can be lost to a read-modify-write race.
+  await db.runTransaction(async (tx) => {
+    const orderSnap = await tx.get(orderRef);
+    const existing = orderSnap.exists
+      ? (orderSnap.data() as Record<string, unknown>)
+      : undefined;
+    const alreadyApplied = wasStockApplied(existing);
+
+    // All reads must precede writes inside a Firestore transaction.
+    const articleSnaps = alreadyApplied
+      ? []
+      : await Promise.all(articles.map((a) => tx.get(a.ref)));
+
+    writeOrderInTx(tx, orderRef, orderSnap.exists, {
+      ...buildOrderDoc(payload, "paid", now),
+      stockApplied: true,
+    });
+
+    articleSnaps.forEach((snap, i) => {
+      const current = (snap.data()?.stock as number | undefined) ?? 0;
+      tx.update(articles[i].ref, {
+        stock: Math.max(0, current - articles[i].quantity),
+        updatedAt: now,
+      });
+    });
   });
-  if (!alreadyApplied && payload.line_items?.length) {
-    await adjustStock(db, partnerId, payload.line_items, -1);
-  }
 }
 
 export async function handleOrderCancelled(
@@ -264,17 +303,39 @@ export async function handleOrderCancelled(
   payload: ShopifyOrderPayload
 ): Promise<void> {
   const now = new Date().toISOString();
+  const orderRef = db
+    .collection(`partners/${partnerId}/orders`)
+    .doc(String(payload.id));
+  const articles = await resolveArticleRefs(db, partnerId, payload.line_items ?? []);
+
   // Only restore stock if this order's sale had actually been applied — and
-  // never restore twice (guards duplicate cancellation deliveries).
-  const shouldRestore = wasStockApplied(await getOrder(db, partnerId, payload.id));
-  await upsertOrder(db, partnerId, payload.id, {
-    ...buildOrderDoc(payload, "cancelled", now),
-    status: "cancelled",
-    stockApplied: false,
+  // never restore twice (the flag flips to false in the same transaction, so
+  // duplicate cancellation deliveries are no-ops).
+  await db.runTransaction(async (tx) => {
+    const orderSnap = await tx.get(orderRef);
+    const existing = orderSnap.exists
+      ? (orderSnap.data() as Record<string, unknown>)
+      : undefined;
+    const shouldRestore = wasStockApplied(existing);
+
+    const articleSnaps = shouldRestore
+      ? await Promise.all(articles.map((a) => tx.get(a.ref)))
+      : [];
+
+    writeOrderInTx(tx, orderRef, orderSnap.exists, {
+      ...buildOrderDoc(payload, "cancelled", now),
+      status: "cancelled",
+      stockApplied: false,
+    });
+
+    articleSnaps.forEach((snap, i) => {
+      const current = (snap.data()?.stock as number | undefined) ?? 0;
+      tx.update(articles[i].ref, {
+        stock: current + articles[i].quantity,
+        updatedAt: now,
+      });
+    });
   });
-  if (shouldRestore && payload.line_items?.length) {
-    await adjustStock(db, partnerId, payload.line_items, 1);
-  }
 }
 
 export async function handleOrderFulfilled(
@@ -295,21 +356,60 @@ export async function handleRefundCreate(
   payload: ShopifyRefundPayload
 ): Promise<void> {
   const now = new Date().toISOString();
-  await upsertOrder(db, partnerId, payload.order_id, {
-    status: "refunded",
-    updatedAt: now,
-  });
+  const orderRef = db
+    .collection(`partners/${partnerId}/orders`)
+    .doc(String(payload.order_id));
 
+  // Restock only "return" refunds here. A cancellation-with-restock makes
+  // Shopify emit BOTH refunds/create (restock_type "cancel") AND
+  // orders/cancelled — the cancel handler owns that restock; restoring here
+  // as well would double it.
   const restockItems = payload.refund_line_items
-    .filter((rli) => rli.restock_type === "return" || rli.restock_type === "cancel")
+    .filter((rli) => rli.restock_type === "return")
     .map((rli) => ({
       variant_id: rli.line_item.variant_id,
       quantity: rli.quantity,
     }));
+  const articles = await resolveArticleRefs(db, partnerId, restockItems);
 
-  if (restockItems.length) {
-    await adjustStock(db, partnerId, restockItems, 1);
-  }
+  await db.runTransaction(async (tx) => {
+    const orderSnap = await tx.get(orderRef);
+    const existing = orderSnap.exists
+      ? (orderSnap.data() as Record<string, unknown>)
+      : undefined;
+
+    // Refund deliveries are at-least-once — track applied refund ids on the
+    // order doc so a duplicate delivery never restocks twice.
+    const appliedIds = Array.isArray(existing?.appliedRefundIds)
+      ? (existing.appliedRefundIds as number[])
+      : [];
+    const isDuplicate = payload.id !== undefined && appliedIds.includes(payload.id);
+
+    const articleSnaps = isDuplicate
+      ? []
+      : await Promise.all(articles.map((a) => tx.get(a.ref)));
+
+    const orderUpdate: Record<string, unknown> = {
+      status: "refunded",
+      updatedAt: now,
+    };
+    if (payload.id !== undefined && !isDuplicate) {
+      orderUpdate.appliedRefundIds = [...appliedIds, payload.id];
+    }
+    if (orderSnap.exists) {
+      tx.update(orderRef, orderUpdate);
+    } else {
+      tx.set(orderRef, { id: orderRef.id, ...orderUpdate });
+    }
+
+    articleSnaps.forEach((snap, i) => {
+      const current = (snap.data()?.stock as number | undefined) ?? 0;
+      tx.update(articles[i].ref, {
+        stock: current + articles[i].quantity,
+        updatedAt: now,
+      });
+    });
+  });
 }
 
 export async function handleProductCreate(
@@ -354,6 +454,8 @@ export async function handleProductUpdate(
     .get();
   if (existing.empty) return;
 
-  // Refresh metadata only — CRM owns stock, so don't overwrite it here.
-  await upsertArticlesFromProduct(db, partnerId, payload, false);
+  // Refresh metadata only — CRM owns stock AND price, so don't overwrite
+  // them here. Drift from manual Shopify edits is intentionally ignored;
+  // the next CRM change re-asserts the canonical value.
+  await upsertArticlesFromProduct(db, partnerId, payload, false, false);
 }

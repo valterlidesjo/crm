@@ -19,10 +19,25 @@ export const Product = Schema.Struct({
   // ─── Article (former variant) fields, now top-level ───
   sku: Schema.optional(Schema.String),
   price: Schema.optional(Schema.Number),
+  /** Strikethrough/"ordinarie" price for sales (rea). When set and > price, channels show it as the pre-discount price. */
+  compareAtPrice: Schema.optional(Schema.Number),
   costPrice: Schema.optional(Schema.Number),
   stock: Schema.Number,
   /** Display grouping label — usually the original product title. */
   groupTitle: Schema.optional(Schema.String),
+
+  // ─── Categorisation (source: Shopify product_type) ───
+  /**
+   * Shopify `product_type` — a raw hierarchy string, e.g.
+   * "Speglar > Runda speglar". Source of truth lives in Shopify; synced in.
+   * Used to segment Google Ads / Performance Max campaigns.
+   */
+  productType: Schema.optional(Schema.String),
+  /**
+   * Google product taxonomy id, e.g. "595" (Home & Garden > Decor > Mirrors).
+   * Drives the Google Shopping feed's `google_product_category`.
+   */
+  googleProductCategory: Schema.optional(Schema.String),
 
   // ─── Shopify links ───
   shopifyProductId: Schema.optional(Schema.String),

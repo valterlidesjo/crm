@@ -1,6 +1,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
 import { registerWebhooks } from "./register-webhooks-logic.js";
+import { requireSuperAdmin } from "../lib/require-super-admin.js";
 
 const WEBHOOK_PATH = "handleShopifyWebhook";
 const REGION = "europe-west1";
@@ -12,20 +13,9 @@ interface RegisterShopifyWebhooksInput {
 export const registerShopifyWebhooks = onCall<RegisterShopifyWebhooksInput>(
   { region: REGION, invoker: "public" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
+    await requireSuperAdmin(request, "register webhooks");
 
     const db = getFirestore();
-    const callerEmail = request.auth.token.email;
-    if (!callerEmail) {
-      throw new HttpsError("unauthenticated", "Must be authenticated with email");
-    }
-
-    const allowedEmailSnap = await db.doc(`allowedEmails/${callerEmail}`).get();
-    if (allowedEmailSnap.data()?.platformRole !== "superAdmin") {
-      throw new HttpsError("permission-denied", "Only superAdmins can register webhooks");
-    }
 
     const { partnerId } = request.data;
     if (!partnerId) {

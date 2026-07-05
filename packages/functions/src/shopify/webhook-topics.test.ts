@@ -256,8 +256,9 @@ describe("handleRefundCreate", () => {
     });
   });
 
-  function makeRefundPayload(restockType: string, quantity = 2) {
+  function makeRefundPayload(restockType: string, quantity = 2, refundId = 555001) {
     return {
+      id: refundId,
       order_id: 9876543210,
       refund_line_items: [
         {
@@ -282,16 +283,77 @@ describe("handleRefundCreate", () => {
     expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10); // 8 + 2
   });
 
-  it("restores stock when restock_type is cancel", async () => {
+  it("does NOT restore stock when restock_type is cancel — orders/cancelled owns that restock", async () => {
+    // A cancellation-with-restock makes Shopify emit BOTH refunds/create
+    // (restock_type "cancel") AND orders/cancelled. Restoring in both handlers
+    // double-restocks, so the refund handler must skip "cancel" items.
     await handleRefundCreate(db as never, PARTNER, makeRefundPayload("cancel", 2));
 
-    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10); // 8 + 2
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(8); // unchanged
   });
 
   it("does NOT restore stock when restock_type is no_restock", async () => {
     await handleRefundCreate(db as never, PARTNER, makeRefundPayload("no_restock", 2));
 
     expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(8); // unchanged
+  });
+
+  it("is idempotent — a duplicate refunds/create delivery does not restock twice", async () => {
+    const payload = makeRefundPayload("return", 2);
+    await handleRefundCreate(db as never, PARTNER, payload);
+    await handleRefundCreate(db as never, PARTNER, payload);
+
+    // 8 + 2 once, NOT 8 + 4
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10);
+  });
+
+  it("distinct refunds on the same order each restock", async () => {
+    await handleRefundCreate(db as never, PARTNER, makeRefundPayload("return", 1, 555001));
+    await handleRefundCreate(db as never, PARTNER, makeRefundPayload("return", 1, 555002));
+
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10); // 8 + 1 + 1
+  });
+});
+
+// ─── cancellation-with-restock end to end ────────────────────────────────────
+
+describe("cancel + refund interplay", () => {
+  it("cancellation with restock restores stock exactly ONCE across both webhooks", async () => {
+    const db = new MockFirestore();
+    seedArticles(db); // art-m stock 10
+
+    const orderPayload = makeOrderPayload(); // 2 × variant 111
+    await handleOrderPaid(db as never, PARTNER, orderPayload);
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(8);
+
+    // Shopify emits both webhooks for a cancel-with-restock, in either order.
+    await handleRefundCreate(db as never, PARTNER, {
+      id: 777,
+      order_id: 9876543210,
+      refund_line_items: [
+        {
+          line_item: { variant_id: 111, quantity: 2, title: "T-Shirt", variant_title: "M", sku: "TS-M", price: "199.00" },
+          restock_type: "cancel",
+          quantity: 2,
+        },
+      ],
+    });
+    await handleOrderCancelled(db as never, PARTNER, orderPayload);
+
+    // Restored once: 8 + 2 = 10, NOT 12.
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10);
+  });
+
+  it("duplicate orders/cancelled deliveries only restore once", async () => {
+    const db = new MockFirestore();
+    seedArticles(db);
+
+    const orderPayload = makeOrderPayload();
+    await handleOrderPaid(db as never, PARTNER, orderPayload);
+    await handleOrderCancelled(db as never, PARTNER, orderPayload);
+    await handleOrderCancelled(db as never, PARTNER, orderPayload);
+
+    expect(articleByVariant(db, "gid://shopify/ProductVariant/111")?.stock).toBe(10);
   });
 });
 

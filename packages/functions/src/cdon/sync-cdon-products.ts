@@ -5,6 +5,7 @@ import {
   getArticleBySku,
   setArticleQuantity,
 } from "./cdon-client.js";
+import { requireSuperAdmin } from "../lib/require-super-admin.js";
 
 interface SyncCdonProductsInput {
   partnerId: string;
@@ -25,18 +26,8 @@ interface SyncCdonProductsInput {
 export const syncCdonProducts = onCall<SyncCdonProductsInput>(
   { region: "europe-west1", timeoutSeconds: 300, invoker: "public" },
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Must be authenticated");
-    }
+    await requireSuperAdmin(request, "sync CDON");
     const db = getFirestore();
-    const callerEmail = request.auth.token.email;
-    if (!callerEmail) {
-      throw new HttpsError("unauthenticated", "Must be authenticated with email");
-    }
-    const allowed = await db.doc(`allowedEmails/${callerEmail}`).get();
-    if (allowed.data()?.platformRole !== "superAdmin") {
-      throw new HttpsError("permission-denied", "Only superAdmins can sync CDON");
-    }
 
     const { partnerId } = request.data;
     if (!partnerId) {

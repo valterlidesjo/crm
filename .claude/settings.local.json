@@ -92,7 +92,9 @@
       "Read(//Users/valter/.claude/**)",
       "WebFetch(domain:docs.cdon.com)",
       "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git rev-list *)",
+      "Bash(firebase functions:list)"
     ],
     "deny": [
       "Bash(rm -rf*)",

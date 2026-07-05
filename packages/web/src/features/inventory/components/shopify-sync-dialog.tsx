@@ -49,8 +49,20 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
 
   // Register webhooks state
   const [registeringWebhooks, setRegisteringWebhooks] = useState(false);
-  const [webhookResult, setWebhookResult] = useState<{ created: number; updated: number } | null>(null);
+  const [webhookResult, setWebhookResult] = useState<{
+    created: number;
+    updated: number;
+    failures?: Array<{ topic: string; op: "create" | "update"; messages: string[] }>;
+  } | null>(null);
   const [webhookError, setWebhookError] = useState<string | null>(null);
+
+  // Registered-webhooks list state
+  const [webhookList, setWebhookList] = useState<{
+    expectedUrl: string;
+    byTopic: Array<{ topic: string; status: "correct" | "wrong-url" | "missing"; callbackUrl?: string }>;
+  } | null>(null);
+  const [loadingWebhookList, setLoadingWebhookList] = useState(false);
+  const [webhookListError, setWebhookListError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadConfig() {
@@ -71,6 +83,13 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
     }
     loadConfig();
   }, [partnerId]);
+
+  useEffect(() => {
+    if (isSuperAdmin && config && tab === "sync") {
+      void loadWebhookList();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSuperAdmin, config, tab]);
 
   async function handleSaveConfig(e: React.FormEvent) {
     e.preventDefault();
@@ -101,6 +120,33 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
     }
   }
 
+  async function loadWebhookList() {
+    setLoadingWebhookList(true);
+    setWebhookListError(null);
+    try {
+      const functions = getFunctions(app, "europe-west1");
+      const listFn = httpsCallable<
+        { partnerId: string },
+        {
+          expectedUrl: string;
+          byTopic: Array<{
+            topic: string;
+            status: "correct" | "wrong-url" | "missing";
+            callbackUrl?: string;
+          }>;
+        }
+      >(functions, "listShopifyWebhooks");
+      const result = await listFn({ partnerId });
+      setWebhookList(result.data);
+    } catch (err) {
+      setWebhookListError(
+        err instanceof Error ? err.message : t("shopifySync.webhookLoadFailed")
+      );
+    } finally {
+      setLoadingWebhookList(false);
+    }
+  }
+
   async function handleRegisterWebhooks() {
     setRegisteringWebhooks(true);
     setWebhookResult(null);
@@ -108,12 +154,18 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
 
     try {
       const functions = getFunctions(app, "europe-west1");
-      const registerFn = httpsCallable<{ partnerId: string }, { created: number; updated: number }>(
-        functions,
-        "registerShopifyWebhooks"
-      );
+      const registerFn = httpsCallable<
+        { partnerId: string },
+        {
+          created: number;
+          updated: number;
+          failures?: Array<{ topic: string; op: "create" | "update"; messages: string[] }>;
+        }
+      >(functions, "registerShopifyWebhooks");
       const result = await registerFn({ partnerId });
       setWebhookResult(result.data);
+      // Refresh the list so the user sees the new state without a manual click.
+      void loadWebhookList();
     } catch (err) {
       setWebhookError(err instanceof Error ? err.message : t("shopifySync.webhookFailed"));
     } finally {
@@ -263,10 +315,29 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                         {t("shopifySync.webhookHelp")}
                       </p>
                       {webhookResult && (
-                        <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-                          <p className="font-medium">{t("shopifySync.webhooksRegistered")}</p>
-                          <p className="text-green-600">{t("shopifySync.webhookResult", { created: webhookResult.created, updated: webhookResult.updated })}</p>
-                        </div>
+                        <>
+                          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                            <p className="font-medium">{t("shopifySync.webhooksRegistered")}</p>
+                            <p className="text-green-600">{t("shopifySync.webhookResult", { created: webhookResult.created, updated: webhookResult.updated })}</p>
+                          </div>
+                          {webhookResult.failures && webhookResult.failures.length > 0 && (
+                            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                              <div className="space-y-1">
+                                <p className="font-medium">
+                                  {t("shopifySync.webhookPartialFailure", { count: webhookResult.failures.length })}
+                                </p>
+                                <ul className="space-y-0.5 text-xs">
+                                  {webhookResult.failures.map((f) => (
+                                    <li key={`${f.op}:${f.topic}`}>
+                                      <span className="font-mono">{f.topic}</span> — {f.messages.join("; ")}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       )}
                       {webhookError && (
                         <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -284,6 +355,74 @@ export function ShopifySyncDialog({ onClose, targetPartnerId }: ShopifySyncDialo
                           <Webhook className={`h-4 w-4 ${registeringWebhooks ? "animate-pulse" : ""}`} />
                           {registeringWebhooks ? t("shopifySync.registeringWebhooks") : t("shopifySync.registerWebhooks")}
                         </button>
+                      </div>
+
+                      <div className="pt-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-sm font-medium">
+                            {t("shopifySync.registeredWebhooks")}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={loadWebhookList}
+                            disabled={loadingWebhookList}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50"
+                          >
+                            <RefreshCw
+                              className={`h-3 w-3 ${loadingWebhookList ? "animate-spin" : ""}`}
+                            />
+                            {t("shopifySync.refreshWebhooks")}
+                          </button>
+                        </div>
+                        <p className="mb-2 text-xs text-muted-foreground">
+                          {t("shopifySync.registeredWebhooksHelp")}
+                        </p>
+
+                        {webhookListError && (
+                          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                            <p>{webhookListError}</p>
+                          </div>
+                        )}
+
+                        {loadingWebhookList && !webhookList ? (
+                          <p className="text-sm text-muted-foreground">
+                            {t("shopifySync.loadingWebhooks")}
+                          </p>
+                        ) : webhookList ? (
+                          <div className="space-y-1 rounded-md border border-border bg-muted/20 p-2">
+                            {webhookList.byTopic.map((w) => {
+                              const isCorrect = w.status === "correct";
+                              const isWrong = w.status === "wrong-url";
+                              const color = isCorrect
+                                ? "text-green-700"
+                                : isWrong
+                                  ? "text-amber-700"
+                                  : "text-red-700";
+                              const label = isCorrect
+                                ? t("shopifySync.webhookStatusCorrect")
+                                : isWrong
+                                  ? t("shopifySync.webhookStatusWrongUrl")
+                                  : t("shopifySync.webhookStatusMissing");
+                              return (
+                                <div
+                                  key={w.topic}
+                                  className="flex items-center justify-between px-2 py-1 text-xs"
+                                >
+                                  <span className="font-mono">{w.topic}</span>
+                                  <span className={`font-medium ${color}`}>
+                                    {isCorrect ? "✓ " : isWrong ? "⚠ " : "✕ "}
+                                    {label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                            <p className="mt-2 border-t border-border pt-2 px-2 text-[10px] text-muted-foreground break-all">
+                              {t("shopifySync.webhookExpectedUrl")}:{" "}
+                              <span className="font-mono">{webhookList.expectedUrl}</span>
+                            </p>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   )}

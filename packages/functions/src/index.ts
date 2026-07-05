@@ -8,10 +8,15 @@ export { syncShopifyProducts } from "./shopify/sync-products.js";
 export { handleShopifyWebhook } from "./shopify/webhook-handler.js";
 export { updateShopifyInventory } from "./shopify/update-inventory.js";
 export { registerShopifyWebhooks } from "./shopify/register-webhooks.js";
+export { listShopifyWebhooks } from "./shopify/list-webhooks.js";
 export { reconcileShopifyOrders } from "./shopify/reconcile-orders.js";
 
 // Central stock fan-out: CRM is the source of truth for stock.
 export { syncStockToChannels } from "./sync/sync-stock-trigger.js";
+
+// Central price fan-out: CRM is the source of truth for price + compareAtPrice.
+export { syncPriceToChannels } from "./sync/sync-price-trigger.js";
+export { syncAllPrices } from "./sync/sync-all-prices.js";
 
 // CDON marketplace (polling-based — CDON has no webhooks).
 export { syncCdonProducts } from "./cdon/sync-cdon-products.js";

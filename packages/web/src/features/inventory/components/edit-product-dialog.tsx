@@ -4,7 +4,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { usePartner } from "@/lib/partner";
 import { useProducts } from "../hooks/use-products";
-import type { Product } from "@crm/shared";
+import { googleCategoryForProductType, type Product } from "@crm/shared";
 import { X, ImageIcon, Upload } from "lucide-react";
 
 interface EditProductDialogProps {
@@ -19,8 +19,12 @@ export function EditProductDialog({ product, onClose }: EditProductDialogProps) 
 
   const [title, setTitle] = useState(product.title);
   const [groupTitle, setGroupTitle] = useState(product.groupTitle ?? "");
+  const [productType, setProductType] = useState(product.productType ?? "");
   const [sku, setSku] = useState(product.sku ?? "");
   const [price, setPrice] = useState(product.price?.toString() ?? "");
+  const [compareAtPrice, setCompareAtPrice] = useState(
+    product.compareAtPrice?.toString() ?? ""
+  );
   const [stock, setStock] = useState(product.stock.toString());
   const [description, setDescription] = useState(product.description ?? "");
   const [vendor, setVendor] = useState(product.vendor ?? "");
@@ -58,11 +62,24 @@ export function EditProductDialog({ product, onClose }: EditProductDialogProps) 
         imageUrl = await getDownloadURL(storageRef);
       }
 
+      const trimmedProductType = productType.trim() || undefined;
+
+      const parsedPrice = price ? parseFloat(price) : undefined;
+      const parsedCompareAt = compareAtPrice
+        ? parseFloat(compareAtPrice)
+        : undefined;
+
       await updateProduct(product.id, {
         title: title.trim(),
         groupTitle: groupTitle.trim() || undefined,
+        productType: trimmedProductType,
+        googleProductCategory: googleCategoryForProductType(trimmedProductType),
         sku: sku.trim() || undefined,
-        price: price ? parseFloat(price) : undefined,
+        price: parsedPrice,
+        compareAtPrice:
+          parsedCompareAt && parsedPrice && parsedCompareAt > parsedPrice
+            ? parsedCompareAt
+            : undefined,
         stock: parseInt(stock, 10) || 0,
         description: description.trim() || undefined,
         vendor: vendor.trim() || undefined,
@@ -140,6 +157,22 @@ export function EditProductDialog({ product, onClose }: EditProductDialogProps) 
               />
             </div>
 
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("editProduct.fieldProductType")}
+              </label>
+              <input
+                type="text"
+                value={productType}
+                onChange={(e) => setProductType(e.target.value)}
+                placeholder={t("editProduct.productTypePlaceholder")}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("editProduct.productTypeHelp")}
+              </p>
+            </div>
+
             <div>
               <label className="mb-1.5 block text-sm font-medium">
                 {t("editProduct.fieldPrice")}
@@ -152,6 +185,24 @@ export function EditProductDialog({ product, onClose }: EditProductDialogProps) 
                 step="1"
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
               />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">
+                {t("editProduct.fieldCompareAtPrice")}
+              </label>
+              <input
+                type="number"
+                value={compareAtPrice}
+                onChange={(e) => setCompareAtPrice(e.target.value)}
+                min="0"
+                step="1"
+                placeholder={t("editProduct.compareAtPlaceholder")}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t("editProduct.compareAtHelp")}
+              </p>
             </div>
 
             <div>
